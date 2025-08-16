@@ -8,4 +8,4 @@ import { AuthGuard } from './guards/auth.guard';
   providers: [AuthService, AuthGuard],
   exports: [AuthService, AuthGuard],
 })
-export class AuthModule {} 
+export class AuthModule {}

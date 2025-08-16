@@ -11,6 +11,10 @@ if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
   console.warn('   SUPABASE_ANON_KEY=your_actual_supabase_anon_key');
   console.warn('');
   console.warn('   Current values:');
-  console.warn(`   SUPABASE_URL: ${process.env.SUPABASE_URL || 'Using default'}`);
-  console.warn(`   SUPABASE_ANON_KEY: ${process.env.SUPABASE_ANON_KEY ? 'SET' : 'Using default'}`);
-} 
+  console.warn(
+    `   SUPABASE_URL: ${process.env.SUPABASE_URL || 'Using default'}`,
+  );
+  console.warn(
+    `   SUPABASE_ANON_KEY: ${process.env.SUPABASE_ANON_KEY ? 'SET' : 'Using default'}`,
+  );
+}

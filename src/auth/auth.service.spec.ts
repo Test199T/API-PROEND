@@ -36,7 +36,9 @@ describe('AuthService', () => {
         },
       });
 
-      await expect(service.register(registerDto)).rejects.toThrow(BadRequestException);
+      await expect(service.register(registerDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -57,7 +59,9 @@ describe('AuthService', () => {
         },
       });
 
-      await expect(service.login(loginDto)).rejects.toThrow(UnauthorizedException);
+      await expect(service.login(loginDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
-}); 
+});

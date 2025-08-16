@@ -10,7 +10,13 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LoginDto, RegisterDto, AuthResponseDto, UpdateProfileDto, ProfileResponseDto } from './dto/auth.dto';
+import {
+  LoginDto,
+  RegisterDto,
+  AuthResponseDto,
+  UpdateProfileDto,
+  ProfileResponseDto,
+} from './dto/auth.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -30,7 +36,9 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  async logout(@Headers('authorization') authHeader: string): Promise<{ message: string }> {
+  async logout(
+    @Headers('authorization') authHeader: string,
+  ): Promise<{ message: string }> {
     const token = authHeader?.replace('Bearer ', '');
     if (!token) {
       throw new Error('No token provided');
@@ -41,13 +49,17 @@ export class AuthController {
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refreshToken(@Body() body: { refresh_token: string }): Promise<AuthResponseDto> {
+  async refreshToken(
+    @Body() body: { refresh_token: string },
+  ): Promise<AuthResponseDto> {
     return this.authService.refreshToken(body.refresh_token);
   }
 
   @Get('profile')
   @HttpCode(HttpStatus.OK)
-  async getProfile(@Headers('authorization') authHeader: string): Promise<ProfileResponseDto> {
+  async getProfile(
+    @Headers('authorization') authHeader: string,
+  ): Promise<ProfileResponseDto> {
     const token = authHeader?.replace('Bearer ', '');
     if (!token) {
       throw new Error('No token provided');
@@ -59,7 +71,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async updateProfile(
     @Headers('authorization') authHeader: string,
-    @Body() updateProfileDto: UpdateProfileDto
+    @Body() updateProfileDto: UpdateProfileDto,
   ): Promise<ProfileResponseDto> {
     const token = authHeader?.replace('Bearer ', '');
     if (!token) {
@@ -67,4 +79,4 @@ export class AuthController {
     }
     return this.authService.updateProfile(token, updateProfileDto);
   }
-} 
+}

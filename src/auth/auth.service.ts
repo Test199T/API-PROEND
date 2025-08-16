@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { supabaseConfig } from '../config/supabase.config';
 import { LoginDto, RegisterDto, AuthResponseDto } from './dto/auth.dto';
@@ -14,10 +18,11 @@ export class AuthService {
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
     try {
       // First, create user in Supabase Auth
-      const { data: authData, error: authError } = await this.supabase.auth.signUp({
-        email: registerDto.email,
-        password: registerDto.password,
-      });
+      const { data: authData, error: authError } =
+        await this.supabase.auth.signUp({
+          email: registerDto.email,
+          password: registerDto.password,
+        });
 
       if (authError) {
         throw new BadRequestException(authError.message);
@@ -156,8 +161,11 @@ export class AuthService {
 
   async getProfile(accessToken: string): Promise<any> {
     try {
-      const { data: { user }, error } = await this.supabase.auth.getUser(accessToken);
-      
+      const {
+        data: { user },
+        error,
+      } = await this.supabase.auth.getUser(accessToken);
+
       if (error || !user) {
         throw new UnauthorizedException('Invalid token');
       }
@@ -189,8 +197,11 @@ export class AuthService {
 
   async updateProfile(accessToken: string, updateData: any): Promise<any> {
     try {
-      const { data: { user }, error } = await this.supabase.auth.getUser(accessToken);
-      
+      const {
+        data: { user },
+        error,
+      } = await this.supabase.auth.getUser(accessToken);
+
       if (error || !user) {
         throw new UnauthorizedException('Invalid token');
       }
@@ -230,10 +241,13 @@ export class AuthService {
         updatedAt: userData.updated_at || null,
       };
     } catch (error) {
-      if (error instanceof UnauthorizedException || error instanceof BadRequestException) {
+      if (
+        error instanceof UnauthorizedException ||
+        error instanceof BadRequestException
+      ) {
         throw error;
       }
       throw new BadRequestException('Failed to update profile');
     }
   }
-} 
+}
