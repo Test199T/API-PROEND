@@ -8,6 +8,8 @@ import { DashboardService } from './services/dashboard.service';
 import { ChatService } from './services/chat.service';
 import { UserService } from './services/user.service';
 import { HealthGoalService } from './services/health-goal.service';
+import { OpenRouterService } from './services/openrouter.service';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 // Controllers
 import { DashboardController } from './controllers/dashboard.controller';
@@ -23,6 +25,7 @@ import { NotificationController } from './controllers/notification.controller';
 import { AIInsightController } from './controllers/ai-insight.controller';
 import { UserPreferenceController } from './controllers/user-preference.controller';
 import { AIController } from './controllers/ai.controller';
+import { HealthController } from './controllers/health.controller';
 
 @Module({
   imports: [
@@ -46,6 +49,7 @@ import { AIController } from './controllers/ai.controller';
     AIInsightController,
     UserPreferenceController,
     AIController,
+    HealthController,
   ],
   providers: [
     SupabaseService,
@@ -54,6 +58,8 @@ import { AIController } from './controllers/ai.controller';
     ChatService,
     UserService,
     HealthGoalService,
+    OpenRouterService,
+    HttpExceptionFilter,
   ],
 })
 export class AppModule {}

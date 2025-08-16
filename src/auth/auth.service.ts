@@ -2,21 +2,37 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { supabaseConfig } from '../config/supabase.config';
 import { LoginDto, RegisterDto, AuthResponseDto } from './dto/auth.dto';
+import * as jwt from 'jsonwebtoken';
 
 @Injectable()
 export class AuthService {
   private supabase: SupabaseClient;
+  private readonly logger = new Logger(AuthService.name);
+  private readonly jwtSecret: string;
 
-  constructor() {
-    this.supabase = createClient(supabaseConfig.url, supabaseConfig.anonKey);
+  constructor(private configService: ConfigService) {
+    const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
+    const supabaseAnonKey = this.configService.get<string>('SUPABASE_ANON_KEY');
+    this.jwtSecret = this.configService.get<string>('JWT_SECRET') || 'your-secret-key';
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      this.logger.error('SUPABASE_URL and SUPABASE_ANON_KEY must be set in environment variables');
+      throw new Error('Supabase configuration is missing');
+    }
+
+    this.supabase = createClient(supabaseUrl, supabaseAnonKey);
+    this.logger.log('Supabase client initialized successfully');
   }
 
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
     try {
+      this.logger.log(`Attempting to register user: ${registerDto.email}`);
+
       // First, create user in Supabase Auth
       const { data: authData, error: authError } =
         await this.supabase.auth.signUp({
@@ -25,31 +41,53 @@ export class AuthService {
         });
 
       if (authError) {
-        throw new BadRequestException(authError.message);
+        this.logger.error(`Supabase auth error: ${authError.message}`, authError);
+        throw new BadRequestException(`Authentication error: ${authError.message}`);
       }
 
       if (!authData.user) {
-        throw new BadRequestException('Registration failed');
+        this.logger.error('No user data returned from Supabase auth');
+        throw new BadRequestException('Registration failed - no user data received');
       }
+
+      this.logger.log(`User created in auth: ${authData.user.id}`);
 
       // Then, create user record in our users table
       const { data: userData, error: userError } = await this.supabase
         .from('users')
         .insert({
-          user_id: authData.user.id,
+          username: registerDto.email.split('@')[0], // Use email prefix as username
           email: registerDto.email,
+          password_hash: registerDto.password, // Store the actual password
           first_name: registerDto.firstName,
           last_name: registerDto.lastName,
-          username: registerDto.email.split('@')[0], // Use email prefix as username
+          // date_of_birth: null, // Optional
+          // gender: null, // Optional
+          // height_cm: null, // Optional
+          // weight_kg: null, // Optional
+          // activity_level: null, // Optional
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          is_active: true,
         })
         .select()
         .single();
 
       if (userError) {
+        this.logger.error(`Database error: ${userError.message}`, userError);
+        
         // If user creation fails, we should clean up the auth user
-        await this.supabase.auth.admin.deleteUser(authData.user.id);
-        throw new BadRequestException('Failed to create user profile');
+        try {
+          await this.supabase.auth.admin.deleteUser(authData.user.id);
+          this.logger.log(`Cleaned up auth user: ${authData.user.id}`);
+        } catch (cleanupError) {
+          this.logger.error(`Failed to cleanup auth user: ${cleanupError.message}`);
+        }
+        
+        throw new BadRequestException(`Failed to create user profile: ${userError.message}`);
       }
+
+      this.logger.log(`User profile created successfully: ${userData.id}`);
 
       return {
         access_token: authData.session?.access_token || '',
@@ -62,43 +100,61 @@ export class AuthService {
         },
       };
     } catch (error) {
+      this.logger.error(`Registration failed for ${registerDto.email}:`, error);
+      
       if (error instanceof BadRequestException) {
         throw error;
       }
-      throw new BadRequestException('Registration failed');
+      
+      // Handle specific error types
+      if (error.message?.includes('fetch failed')) {
+        throw new BadRequestException('Database connection failed. Please try again later.');
+      }
+      
+      if (error.message?.includes('network')) {
+        throw new BadRequestException('Network error. Please check your connection and try again.');
+      }
+      
+      throw new BadRequestException(`Registration failed: ${error.message}`);
     }
   }
 
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     try {
-      const { data, error } = await this.supabase.auth.signInWithPassword({
-        email: loginDto.email,
-        password: loginDto.password,
-      });
+      // First, check if user exists in our database
+      const { data: userData, error: userError } = await this.supabase
+        .from('users')
+        .select('*')
+        .eq('email', loginDto.email)
+        .single();
 
-      if (error) {
+      if (userError || !userData) {
         throw new UnauthorizedException('Invalid credentials');
       }
 
-      if (!data.user || !data.session) {
-        throw new UnauthorizedException('Login failed');
+      // Check password
+      if (userData.password_hash !== loginDto.password) {
+        throw new UnauthorizedException('Invalid credentials');
       }
 
-      // Get user profile from our users table
-      const { data: userData } = await this.supabase
-        .from('users')
-        .select('*')
-        .eq('user_id', data.user.id)
-        .single();
+      // Generate JWT tokens
+      const payload = { 
+        sub: userData.id, 
+        email: userData.email,
+        username: userData.username 
+      };
+      
+      const accessToken = jwt.sign(payload, this.jwtSecret, { expiresIn: '24h' });
+      const refreshToken = jwt.sign(payload, this.jwtSecret, { expiresIn: '7d' });
 
       return {
-        access_token: data.session.access_token,
-        refresh_token: data.session.refresh_token,
+        access_token: accessToken,
+        refresh_token: refreshToken,
         user: {
-          id: data.user.id,
-          email: data.user.email || '',
-          firstName: userData?.first_name || '',
-          lastName: userData?.last_name || '',
+          id: userData.id,
+          email: userData.email,
+          firstName: userData.first_name,
+          lastName: userData.last_name,
         },
       };
     } catch (error) {

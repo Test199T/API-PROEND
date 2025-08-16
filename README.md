@@ -18,13 +18,14 @@
 
 ### 🚀 Key Features
 
-- **🤖 AI-Powered Health Analysis**: วิเคราะห์ข้อมูลสุขภาพและให้คำแนะนำส่วนบุคคล
+- **🤖 AI-Powered Health Analysis**: วิเคราะห์ข้อมูลสุขภาพและให้คำแนะนำส่วนบุคคลด้วย OpenRouter AI
 - **📊 Comprehensive Health Tracking**: ติดตามอาหาร, การออกกำลังกาย, การนอน, การดื่มน้ำ
 - **🎯 Goal Management**: จัดการเป้าหมายสุขภาพและติดตามความคืบหน้า
-- **💬 AI Chat Assistant**: แชทกับ AI เพื่อรับคำแนะนำด้านสุขภาพ
+- **💬 AI Chat Assistant**: แชทกับ AI เพื่อรับคำแนะนำด้านสุขภาพแบบเรียลไทม์
 - **📱 Real-time Notifications**: การแจ้งเตือนแบบเรียลไทม์
 - **🔐 Secure Authentication**: ระบบความปลอดภัยด้วย JWT
 - **🌐 RESTful API**: API ที่ออกแบบตามมาตรฐาน REST
+- **🧠 Advanced AI Integration**: เชื่อมต่อกับ OpenRouter สำหรับ LLM capabilities
 
 ## 🏗️ Project Structure
 
@@ -52,6 +53,7 @@ src/
 │   ├── ai.service.ts             # AI Analysis Service
 │   ├── chat.service.ts           # Chat Management Service
 │   ├── dashboard.service.ts      # Dashboard Data Service
+│   ├── openrouter.service.ts     # OpenRouter AI Integration Service
 │   ├── supabase.service.ts       # Database Operations
 │   └── user.service.ts           # User Management Service
 └── main.ts               # Application Entry Point
@@ -139,6 +141,11 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 JWT_SECRET=your_jwt_secret_key
 JWT_EXPIRES_IN=24h
 
+# OpenRouter Configuration
+OPENROUTER_API_KEY=your_openrouter_api_key
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+OPENROUTER_MODEL=gpt-4o-mini  # หรือ model อื่นๆ ที่ต้องการ
+
 # Application Configuration
 PORT=3000
 NODE_ENV=development
@@ -195,6 +202,7 @@ npm run test:cov
 - **Language**: TypeScript
 - **Database**: Supabase (PostgreSQL)
 - **Authentication**: JWT
+- **AI Integration**: OpenRouter API
 - **API Documentation**: OpenAPI/Swagger
 - **Testing**: Jest
 - **Package Manager**: npm

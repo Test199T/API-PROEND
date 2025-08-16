@@ -25,6 +25,29 @@ export class SupabaseService implements OnModuleInit {
     return this.supabase;
   }
 
+  /**
+   * ตรวจสอบสถานะการเชื่อมต่อฐานข้อมูล
+   */
+  async healthCheck(): Promise<boolean> {
+    try {
+      // ทดสอบการเชื่อมต่อโดยการ query ตาราง users
+      const { data, error } = await this.supabase
+        .from('users')
+        .select('id')
+        .limit(1);
+
+      if (error) {
+        console.error('Database health check failed:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Database health check error:', error);
+      return false;
+    }
+  }
+
   // User Management
   async createUser(userData: any) {
     const { data, error } = await this.supabase
@@ -1098,6 +1121,28 @@ export class SupabaseService implements OnModuleInit {
     return data;
   }
 
+  async updateChatSession(sessionId: number, updateData: any) {
+    const { data, error } = await this.supabase
+      .from('chat_sessions')
+      .update(updateData)
+      .eq('id', sessionId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async deleteChatSession(sessionId: number) {
+    const { error } = await this.supabase
+      .from('chat_sessions')
+      .delete()
+      .eq('id', sessionId);
+
+    if (error) throw error;
+    return { success: true };
+  }
+
   // Chat Messages
   async createChatMessage(messageData: any) {
     const { data, error } = await this.supabase
@@ -1118,19 +1163,7 @@ export class SupabaseService implements OnModuleInit {
       .order('timestamp', { ascending: true });
 
     if (error) throw error;
-    return data;
-  }
-
-  async updateChatSession(sessionId: number, updateData: any) {
-    const { data, error } = await this.supabase
-      .from('chat_sessions')
-      .update(updateData)
-      .eq('id', sessionId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+    return data || [];
   }
 
   async updateChatMessage(messageId: number, updateData: any) {
@@ -1143,6 +1176,16 @@ export class SupabaseService implements OnModuleInit {
 
     if (error) throw error;
     return data;
+  }
+
+  async deleteChatMessagesBySessionId(sessionId: number) {
+    const { error } = await this.supabase
+      .from('chat_messages')
+      .delete()
+      .eq('session_id', sessionId);
+
+    if (error) throw error;
+    return { success: true };
   }
 
   // Notifications
