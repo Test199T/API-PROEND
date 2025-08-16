@@ -37,7 +37,7 @@ import {
   HealthGoalTemplateDto,
   HealthGoalRecommendationDto,
 } from '../dto/health-goal.dto';
-import { ResponseDto } from '../dto';
+import { ResponseDto } from '../dto/common.dto';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { User } from '../auth/decorators/user.decorator';
 
