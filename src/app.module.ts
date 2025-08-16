@@ -22,6 +22,7 @@ import { HealthMetricController } from './controllers/health-metric.controller';
 import { NotificationController } from './controllers/notification.controller';
 import { AIInsightController } from './controllers/ai-insight.controller';
 import { UserPreferenceController } from './controllers/user-preference.controller';
+import { AIController } from './controllers/ai.controller';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { UserPreferenceController } from './controllers/user-preference.controll
     NotificationController,
     AIInsightController,
     UserPreferenceController,
+    AIController,
   ],
   providers: [
     SupabaseService,

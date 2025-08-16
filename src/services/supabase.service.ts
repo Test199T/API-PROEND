@@ -2112,6 +2112,48 @@ export class SupabaseService implements OnModuleInit {
     return { current_streak: currentStreak, longest_streak: longestStreak };
   }
 
+  // User Preferences
+  async getUserPreferencesByUserId(userId: number) {
+    const { data, error } = await this.supabase
+      .from('user_preferences')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (error) {
+      // ถ้าไม่มีข้อมูล preferences ให้สร้าง default
+      if (error.code === 'PGRST116') {
+        const defaultPreferences = {
+          user_id: userId,
+          theme: 'light',
+          language: 'th',
+          timezone: 'Asia/Bangkok',
+          measurement_unit: 'metric',
+          notification_email: true,
+          notification_push: true,
+          notification_sms: false,
+          privacy_level: 'standard',
+        };
+
+        return await this.createUserPreferences(defaultPreferences);
+      }
+      throw error;
+    }
+
+    return data;
+  }
+
+  async createUserPreferences(preferencesData: any) {
+    const { data, error } = await this.supabase
+      .from('user_preferences')
+      .insert(preferencesData)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
   // Utility Methods
   async deleteRecord(table: string, id: number) {
     const { error } = await this.supabase.from(table).delete().eq('id', id);

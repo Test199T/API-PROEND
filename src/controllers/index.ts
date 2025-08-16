@@ -33,6 +33,9 @@ export * from './notification.controller';
 // AI Insight Controller
 export * from './ai-insight.controller';
 
+// AI Controller
+export * from './ai.controller';
+
 // User Preference Controller
 export * from './user-preference.controller';
 
