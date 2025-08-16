@@ -300,15 +300,406 @@ Authorization: Bearer <your_jwt_token>
 
 ## 🧪 Testing
 
+### Testing Framework
+
+ระบบใช้ **Jest** เป็น testing framework หลัก พร้อมกับ **Supertest** สำหรับ API testing
+
+### Test Types
+
+#### 1. **Unit Tests** (`*.spec.ts`)
+- ทดสอบ individual functions และ methods
+- ใช้ `@nestjs/testing` สำหรับ mocking
+- รันด้วย `npm run test`
+
+#### 2. **E2E Tests** (`*.e2e-spec.ts`)
+- ทดสอบ API endpoints แบบ end-to-end
+- ใช้ `supertest` สำหรับ HTTP requests
+- รันด้วย `npm run test:e2e`
+
+### Running Tests
+
 ```bash
-# Unit tests
-npm run test
+# Unit Tests
+npm run test              # รัน unit tests ครั้งเดียว
+npm run test:watch        # รัน tests แบบ watch mode
+npm run test:cov          # รัน tests พร้อม coverage report
+npm run test:debug        # รัน tests แบบ debug mode
 
-# E2E tests
-npm run test:e2e
+# E2E Tests
+npm run test:e2e          # รัน end-to-end tests
 
-# Test coverage
+# All Tests
+npm run test && npm run test:e2e  # รันทั้ง unit และ e2e tests
+```
+
+### Test Structure
+
+```
+test/
+├── app.e2e-spec.ts       # E2E tests สำหรับ AppController
+└── jest-e2e.json         # Jest configuration สำหรับ E2E tests
+
+src/
+├── app.controller.spec.ts # Unit tests สำหรับ AppController
+├── auth/
+│   ├── auth.controller.spec.ts
+│   └── auth.service.spec.ts
+└── services/
+    ├── ai.service.spec.ts
+    └── chat.service.spec.ts
+```
+
+### Writing Unit Tests
+
+#### Example: Service Test
+```typescript
+// src/services/ai.service.spec.ts
+import { Test, TestingModule } from '@nestjs/testing';
+import { AiService } from './ai.service';
+import { OpenRouterService } from './openrouter.service';
+
+describe('AiService', () => {
+  let service: AiService;
+  let openRouterService: OpenRouterService;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        AiService,
+        {
+          provide: OpenRouterService,
+          useValue: {
+            analyzeHealthData: jest.fn(),
+            generateRecommendations: jest.fn(),
+          },
+        },
+      ],
+    }).compile();
+
+    service = module.get<AiService>(AiService);
+    openRouterService = module.get<OpenRouterService>(OpenRouterService);
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  describe('analyzeUserHealth', () => {
+    it('should return health analysis', async () => {
+      const mockAnalysis = 'สุขภาพของคุณดีมาก';
+      jest.spyOn(openRouterService, 'analyzeHealthData')
+        .mockResolvedValue(mockAnalysis);
+
+      const result = await service.analyzeUserHealth(1, 'overall');
+      expect(result).toContain(mockAnalysis);
+    });
+
+    it('should use fallback when AI fails', async () => {
+      jest.spyOn(openRouterService, 'analyzeHealthData')
+        .mockRejectedValue(new Error('API Error'));
+
+      const result = await service.analyzeUserHealth(1, 'overall');
+      expect(result).toContain('ขออภัย');
+    });
+  });
+});
+```
+
+#### Example: Controller Test
+```typescript
+// src/controllers/ai.controller.spec.ts
+import { Test, TestingModule } from '@nestjs/testing';
+import { AiController } from './ai.controller';
+import { AiService } from '../services/ai.service';
+
+describe('AiController', () => {
+  let controller: AiController;
+  let service: AiService;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [AiController],
+      providers: [
+        {
+          provide: AiService,
+          useValue: {
+            analyzeUserHealth: jest.fn(),
+            generateAIRecommendations: jest.fn(),
+          },
+        },
+      ],
+    }).compile();
+
+    controller = module.get<AiController>(AiController);
+    service = module.get<AiService>(AiService);
+  });
+
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
+  });
+
+  describe('analyze', () => {
+    it('should return health analysis', async () => {
+      const mockResult = { analysis: 'สุขภาพดี' };
+      jest.spyOn(service, 'analyzeUserHealth').mockResolvedValue(mockResult);
+
+      const result = await controller.analyze(1, { focus_area: 'overall' });
+      expect(result).toEqual(mockResult);
+    });
+  });
+});
+```
+
+### Writing E2E Tests
+
+#### Example: Authentication E2E Test
+```typescript
+// test/auth.e2e-spec.ts
+import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
+import * as request from 'supertest';
+import { AppModule } from '../src/app.module';
+
+describe('Authentication (e2e)', () => {
+  let app: INestApplication;
+
+  beforeEach(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+    await app.init();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  describe('/auth/register (POST)', () => {
+    it('should register new user', () => {
+      return request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
+          email: 'test@example.com',
+          password: 'password123',
+          firstName: 'ทดสอบ',
+          lastName: 'ผู้ใช้'
+        })
+        .expect(201)
+        .expect((res) => {
+          expect(res.body.access_token).toBeDefined();
+          expect(res.body.user.email).toBe('test@example.com');
+        });
+    });
+
+    it('should reject duplicate email', () => {
+      return request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
+          email: 'test@example.com',
+          password: 'password123',
+          firstName: 'ทดสอบ',
+          lastName: 'ผู้ใช้'
+        })
+        .expect(400);
+    });
+  });
+
+  describe('/auth/login (POST)', () => {
+    it('should login existing user', () => {
+      return request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email: 'test@example.com',
+          password: 'password123'
+        })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.access_token).toBeDefined();
+        });
+    });
+
+    it('should reject invalid credentials', () => {
+      return request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email: 'test@example.com',
+          password: 'wrongpassword'
+        })
+        .expect(401);
+    });
+  });
+});
+```
+
+#### Example: AI API E2E Test
+```typescript
+// test/ai.e2e-spec.ts
+import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
+import * as request from 'supertest';
+import { AppModule } from '../src/app.module';
+
+describe('AI API (e2e)', () => {
+  let app: INestApplication;
+  let authToken: string;
+
+  beforeEach(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+    await app.init();
+
+    // Get auth token for testing
+    const loginResponse = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({
+        email: 'test@example.com',
+        password: 'password123'
+      });
+    
+    authToken = loginResponse.body.access_token;
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  describe('/ai/analyze (POST)', () => {
+    it('should analyze health data', () => {
+      return request(app.getHttpServer())
+        .post('/ai/analyze')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          focus_area: 'overall',
+          time_period: 'current'
+        })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.analysis).toBeDefined();
+        });
+    });
+
+    it('should require authentication', () => {
+      return request(app.getHttpServer())
+        .post('/ai/analyze')
+        .send({
+          focus_area: 'overall',
+          time_period: 'current'
+        })
+        .expect(401);
+    });
+  });
+
+  describe('/ai/chat/start (POST)', () => {
+    it('should start chat session', () => {
+      return request(app.getHttpServer())
+        .post('/ai/chat/start')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          initial_message: 'สวัสดีครับ'
+        })
+        .expect(201)
+        .expect((res) => {
+          expect(res.body.session_id).toBeDefined();
+          expect(res.body.ai_response).toBeDefined();
+        });
+    });
+  });
+});
+```
+
+### Test Configuration
+
+#### Jest Configuration (package.json)
+```json
+{
+  "jest": {
+    "moduleFileExtensions": ["js", "json", "ts"],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": ["**/*.(t|j)s"],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
+  }
+}
+```
+
+#### E2E Jest Configuration (test/jest-e2e.json)
+```json
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  }
+}
+```
+
+### Test Coverage
+
+```bash
+# รัน tests พร้อม coverage report
 npm run test:cov
+
+# ดู coverage report ใน browser
+open coverage/lcov-report/index.html
+```
+
+**Coverage Goals:**
+- **Statements**: 80%+
+- **Branches**: 75%+
+- **Functions**: 80%+
+- **Lines**: 80%+
+
+### Testing Best Practices
+
+1. **Test Naming**: ใช้ชื่อที่อธิบายพฤติกรรมที่ต้องการทดสอบ
+2. **Arrange-Act-Assert**: จัดระเบียบ test code ให้ชัดเจน
+3. **Mocking**: Mock external dependencies และ services
+4. **Test Isolation**: แต่ละ test ต้องเป็นอิสระต่อกัน
+5. **Edge Cases**: ทดสอบกรณีผิดปกติและ boundary conditions
+6. **Integration Tests**: ทดสอบการทำงานร่วมกันของ components
+
+### Debugging Tests
+
+```bash
+# Debug unit tests
+npm run test:debug
+
+# Debug specific test file
+npm run test -- --testNamePattern="should register new user"
+
+# Run tests with verbose output
+npm run test -- --verbose
+```
+
+### Continuous Integration
+
+```yaml
+# .github/workflows/test.yml
+name: Tests
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '18'
+      - run: npm ci
+      - run: npm run test
+      - run: npm run test:e2e
+      - run: npm run test:cov
 ```
 
 ## 🔒 Security Features
