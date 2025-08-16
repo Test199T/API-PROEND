@@ -1,4 +1,9 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthService } from '../auth.service';
 
 @Injectable()
@@ -14,7 +19,7 @@ export class AuthGuard implements CanActivate {
     }
 
     const token = authHeader.replace('Bearer ', '');
-    
+
     try {
       const user = await this.authService.getProfile(token);
       // Attach user to request for use in controllers
@@ -24,4 +29,4 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException('Invalid token');
     }
   }
-} 
+}

@@ -1,4 +1,12 @@
-import { IsEmail, IsString, MinLength, IsOptional, IsDateString, IsNumber, IsIn } from 'class-validator';
+import {
+  IsEmail,
+  IsString,
+  MinLength,
+  IsOptional,
+  IsDateString,
+  IsNumber,
+  IsIn,
+} from 'class-validator';
 
 export class LoginDto {
   @IsEmail()
@@ -85,4 +93,4 @@ export class ProfileResponseDto {
   profileImageUrl: string | null;
   createdAt: string;
   updatedAt: string | null;
-} 
+}

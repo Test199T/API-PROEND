@@ -42,7 +42,12 @@ describe('AuthController', () => {
       const expectedResult = {
         access_token: 'token',
         refresh_token: 'refresh',
-        user: { id: '1', email: 'test@example.com', firstName: 'John', lastName: 'Doe' },
+        user: {
+          id: '1',
+          email: 'test@example.com',
+          firstName: 'John',
+          lastName: 'Doe',
+        },
       };
 
       jest.spyOn(service, 'register').mockResolvedValue(expectedResult);
@@ -62,7 +67,12 @@ describe('AuthController', () => {
       const expectedResult = {
         access_token: 'token',
         refresh_token: 'refresh',
-        user: { id: '1', email: 'test@example.com', firstName: 'John', lastName: 'Doe' },
+        user: {
+          id: '1',
+          email: 'test@example.com',
+          firstName: 'John',
+          lastName: 'Doe',
+        },
       };
 
       jest.spyOn(service, 'login').mockResolvedValue(expectedResult);
@@ -72,4 +82,4 @@ describe('AuthController', () => {
       expect(result).toEqual(expectedResult);
     });
   });
-}); 
+});
