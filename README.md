@@ -18,13 +18,14 @@
 
 ### 🚀 Key Features
 
-- **🤖 AI-Powered Health Analysis**: วิเคราะห์ข้อมูลสุขภาพและให้คำแนะนำส่วนบุคคล
+- **🤖 AI-Powered Health Analysis**: วิเคราะห์ข้อมูลสุขภาพและให้คำแนะนำส่วนบุคคลด้วย OpenRouter AI
 - **📊 Comprehensive Health Tracking**: ติดตามอาหาร, การออกกำลังกาย, การนอน, การดื่มน้ำ
 - **🎯 Goal Management**: จัดการเป้าหมายสุขภาพและติดตามความคืบหน้า
-- **💬 AI Chat Assistant**: แชทกับ AI เพื่อรับคำแนะนำด้านสุขภาพ
+- **💬 AI Chat Assistant**: แชทกับ AI เพื่อรับคำแนะนำด้านสุขภาพแบบเรียลไทม์
 - **📱 Real-time Notifications**: การแจ้งเตือนแบบเรียลไทม์
 - **🔐 Secure Authentication**: ระบบความปลอดภัยด้วย JWT
 - **🌐 RESTful API**: API ที่ออกแบบตามมาตรฐาน REST
+- **🧠 Advanced AI Integration**: เชื่อมต่อกับ OpenRouter สำหรับ LLM capabilities
 
 ## 🏗️ Project Structure
 
@@ -52,6 +53,7 @@ src/
 │   ├── ai.service.ts             # AI Analysis Service
 │   ├── chat.service.ts           # Chat Management Service
 │   ├── dashboard.service.ts      # Dashboard Data Service
+│   ├── openrouter.service.ts     # OpenRouter AI Integration Service
 │   ├── supabase.service.ts       # Database Operations
 │   └── user.service.ts           # User Management Service
 └── main.ts               # Application Entry Point
@@ -110,9 +112,15 @@ src/
 
 ### Prerequisites
 
-- Node.js 18+ 
-- npm หรือ yarn
-- Supabase account และ project
+**System Requirements:**
+- **Operating System**: Windows 10/11, macOS 10.15+, หรือ Linux (Ubuntu 18.04+)
+- **Node.js**: เวอร์ชัน 18.0.0 หรือสูงกว่า
+- **npm**: เวอร์ชัน 8.0.0 หรือสูงกว่า (มาพร้อมกับ Node.js)
+- **Git**: สำหรับ clone repository
+
+**External Services:**
+- **Supabase Account**: สร้าง account ที่ [supabase.com](https://supabase.com)
+- **OpenRouter Account**: สร้าง account ที่ [openrouter.ai](https://openrouter.ai) สำหรับ AI API
 
 ### Installation
 
@@ -122,12 +130,43 @@ git clone <repository-url>
 cd API-PROEND
 ```
 
-2. **Install dependencies**
+2. **Install Node.js Dependencies**
 ```bash
+# Install all required packages
 npm install
+
+# หรือใช้ yarn (ถ้าต้องการ)
+yarn install
 ```
 
-3. **Environment Configuration**
+3. **Required Packages ที่จะติดตั้งอัตโนมัติ:**
+```bash
+# Core Framework
+@nestjs/common @nestjs/core @nestjs/platform-express
+@nestjs/config @nestjs/typeorm
+
+# Database & ORM
+@supabase/supabase-js
+typeorm pg
+
+# Authentication
+jsonwebtoken @types/jsonwebtoken
+bcrypt @types/bcrypt
+
+# AI Integration
+axios
+
+# Validation & Security
+class-validator class-transformer
+helmet
+
+# Development Tools
+@nestjs/cli
+typescript @types/node
+jest @types/jest
+```
+
+4. **Environment Configuration**
 สร้างไฟล์ `.env` ในโฟลเดอร์หลัก:
 ```env
 # Supabase Configuration
@@ -139,20 +178,53 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 JWT_SECRET=your_jwt_secret_key
 JWT_EXPIRES_IN=24h
 
+# OpenRouter Configuration
+OPENROUTER_API_KEY=your_openrouter_api_key
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+OPENROUTER_MODEL=gpt-4o-mini  # หรือ model อื่นๆ ที่ต้องการ
+
 # Application Configuration
 PORT=3000
 NODE_ENV=development
 ```
 
-4. **Database Setup**
-- สร้าง project ใน Supabase
-- รัน SQL schema จาก `database/schema.sql`
-- อัพเดท environment variables
+5. **Database Setup**
+```sql
+-- สร้าง project ใน Supabase แล้วรัน SQL schema นี้:
+
+-- ตารางผู้ใช้
+CREATE TABLE public.users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    is_active BOOLEAN DEFAULT true
+);
+
+-- ตารางอื่นๆ (health_goals, food_log, exercise_log, etc.)
+-- ดูรายละเอียดในไฟล์ database/schema.sql
+```
+
+6. **Supabase Project Setup**
+- ไปที่ [supabase.com](https://supabase.com)
+- สร้าง project ใหม่
+- ไปที่ Settings > API
+- คัดลอก URL และ API Keys
+- อัพเดทไฟล์ `.env`
+
+7. **OpenRouter API Setup**
+- ไปที่ [openrouter.ai](https://openrouter.ai)
+- สร้าง account และ API key
+- อัพเดท `OPENROUTER_API_KEY` ในไฟล์ `.env`
 
 ### Running the Application
 
 ```bash
-# Development mode
+# Development mode (with hot reload)
 npm run start:dev
 
 # Production mode
@@ -160,7 +232,71 @@ npm run start:prod
 
 # Build the application
 npm run build
+
+# Start built application
+npm run start
 ```
+
+### Verification Steps
+
+1. **ตรวจสอบการเชื่อมต่อ Database:**
+```bash
+# เรียก API endpoint
+GET http://localhost:3000/health
+```
+
+2. **ทดสอบ Authentication:**
+```bash
+# ทดสอบการสมัครสมาชิก
+POST http://localhost:3000/auth/register
+{
+  "email": "test@example.com",
+  "password": "password123",
+  "firstName": "ทดสอบ",
+  "lastName": "ผู้ใช้"
+}
+```
+
+3. **ทดสอบ AI Integration:**
+```bash
+# ทดสอบ Health Analysis
+POST http://localhost:3000/ai/analyze
+Authorization: Bearer <your_jwt_token>
+{
+  "focus_area": "overall",
+  "time_period": "current"
+}
+```
+
+### Troubleshooting
+
+**ปัญหาที่พบบ่อย:**
+
+1. **"fetch failed" error:**
+   - ตรวจสอบ `OPENROUTER_API_KEY` ใน `.env`
+   - ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต
+
+2. **"Cannot connect to database":**
+   - ตรวจสอบ `SUPABASE_URL` และ `SUPABASE_ANON_KEY`
+   - ตรวจสอบ Supabase project status
+
+3. **"Invalid token" error:**
+   - ตรวจสอบ `JWT_SECRET` ใน `.env`
+   - ตรวจสอบ token expiration
+
+4. **Port already in use:**
+   - เปลี่ยน `PORT` ใน `.env` หรือ
+   - หยุด process ที่ใช้ port 3000
+
+### Development Tools
+
+**แนะนำให้ติดตั้ง:**
+- **Postman** หรือ **Insomnia**: สำหรับทดสอบ API
+- **VS Code**: Editor ที่แนะนำ พร้อม extensions:
+  - NestJS Snippets
+  - TypeScript Importer
+  - REST Client
+- **Git GUI**: เช่น SourceTree, GitKraken
 
 ## 🧪 Testing
 
@@ -195,6 +331,7 @@ npm run test:cov
 - **Language**: TypeScript
 - **Database**: Supabase (PostgreSQL)
 - **Authentication**: JWT
+- **AI Integration**: OpenRouter API
 - **API Documentation**: OpenAPI/Swagger
 - **Testing**: Jest
 - **Package Manager**: npm

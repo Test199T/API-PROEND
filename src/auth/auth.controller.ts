@@ -8,6 +8,9 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
+  Logger,
+  BadRequestException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import {
@@ -20,18 +23,36 @@ import {
 
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   async register(@Body() registerDto: RegisterDto): Promise<AuthResponseDto> {
-    return this.authService.register(registerDto);
+    try {
+      this.logger.log(`Registration request received for: ${registerDto.email}`);
+      const result = await this.authService.register(registerDto);
+      this.logger.log(`Registration successful for: ${registerDto.email}`);
+      return result;
+    } catch (error) {
+      this.logger.error(`Registration failed for ${registerDto.email}:`, error);
+      throw error; // Re-throw to let the global exception filter handle it
+    }
   }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
-    return this.authService.login(loginDto);
+    try {
+      this.logger.log(`Login attempt for: ${loginDto.email}`);
+      const result = await this.authService.login(loginDto);
+      this.logger.log(`Login successful for: ${loginDto.email}`);
+      return result;
+    } catch (error) {
+      this.logger.error(`Login failed for ${loginDto.email}:`, error);
+      throw error;
+    }
   }
 
   @Post('logout')
@@ -39,12 +60,17 @@ export class AuthController {
   async logout(
     @Headers('authorization') authHeader: string,
   ): Promise<{ message: string }> {
-    const token = authHeader?.replace('Bearer ', '');
-    if (!token) {
-      throw new Error('No token provided');
+    try {
+      const token = authHeader?.replace('Bearer ', '');
+      if (!token) {
+        throw new UnauthorizedException('No token provided');
+      }
+      await this.authService.logout(token);
+      return { message: 'Logged out successfully' };
+    } catch (error) {
+      this.logger.error('Logout failed:', error);
+      throw error;
     }
-    await this.authService.logout(token);
-    return { message: 'Logged out successfully' };
   }
 
   @Post('refresh')
@@ -52,7 +78,15 @@ export class AuthController {
   async refreshToken(
     @Body() body: { refresh_token: string },
   ): Promise<AuthResponseDto> {
-    return this.authService.refreshToken(body.refresh_token);
+    try {
+      if (!body.refresh_token) {
+        throw new BadRequestException('Refresh token is required');
+      }
+      return await this.authService.refreshToken(body.refresh_token);
+    } catch (error) {
+      this.logger.error('Token refresh failed:', error);
+      throw error;
+    }
   }
 
   @Get('profile')
@@ -60,11 +94,16 @@ export class AuthController {
   async getProfile(
     @Headers('authorization') authHeader: string,
   ): Promise<ProfileResponseDto> {
-    const token = authHeader?.replace('Bearer ', '');
-    if (!token) {
-      throw new Error('No token provided');
+    try {
+      const token = authHeader?.replace('Bearer ', '');
+      if (!token) {
+        throw new UnauthorizedException('No token provided');
+      }
+      return await this.authService.getProfile(token);
+    } catch (error) {
+      this.logger.error('Profile retrieval failed:', error);
+      throw error;
     }
-    return this.authService.getProfile(token);
   }
 
   @Put('profile')
@@ -73,10 +112,15 @@ export class AuthController {
     @Headers('authorization') authHeader: string,
     @Body() updateProfileDto: UpdateProfileDto,
   ): Promise<ProfileResponseDto> {
-    const token = authHeader?.replace('Bearer ', '');
-    if (!token) {
-      throw new Error('No token provided');
+    try {
+      const token = authHeader?.replace('Bearer ', '');
+      if (!token) {
+        throw new UnauthorizedException('No token provided');
+      }
+      return await this.authService.updateProfile(token, updateProfileDto);
+    } catch (error) {
+      this.logger.error('Profile update failed:', error);
+      throw error;
     }
-    return this.authService.updateProfile(token, updateProfileDto);
   }
 }

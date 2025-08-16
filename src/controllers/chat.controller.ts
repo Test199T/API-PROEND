@@ -9,12 +9,7 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import {
-  ChatService,
-  ChatSession,
-  ChatMessage,
-  ChatResponse,
-} from '../services/chat.service';
+import { ChatService } from '../services/chat.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
 
 @Controller('chat')

@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { SupabaseService } from './supabase.service';
+import { OpenRouterService } from './openrouter.service';
 
 export interface HealthAnalysis {
   nutritionScore: number;
@@ -24,207 +25,106 @@ export interface AIRecommendation {
 
 @Injectable()
 export class AIService {
-  constructor(private supabaseService: SupabaseService) {}
+  private readonly logger = new Logger(AIService.name);
 
-  // วิเคราะห์สุขภาพรวมของผู้ใช้
-  async analyzeUserHealth(userId: number): Promise<HealthAnalysis> {
+  constructor(
+    private readonly supabaseService: SupabaseService,
+    private readonly openRouterService: OpenRouterService,
+  ) {}
+
+  /**
+   * วิเคราะห์สุขภาพของผู้ใช้ด้วย AI
+   */
+  async analyzeUserHealth(userId: number): Promise<any> {
     try {
-      // ดึงข้อมูลสุขภาพของผู้ใช้
+      // ดึงข้อมูลผู้ใช้และสุขภาพ
       const userData = await this.supabaseService.getUserById(userId);
-      const foodLogs = await this.supabaseService.getFoodLogs(userId, {});
-      const exerciseLogs = await this.supabaseService.getExerciseLogs(
-        userId,
-        {},
-      );
-      const sleepLogs = await this.supabaseService.getSleepLogsByUserId(userId);
-      const waterLogs = await this.supabaseService.getWaterLogsByUserId(userId);
-      const healthGoals =
-        await this.supabaseService.getHealthGoalsByUserId(userId);
+      const healthData = await this.getHealthDataForAnalysis(userId);
 
-      // คำนวณคะแนนแต่ละด้าน
-      const nutritionScore = this.calculateNutritionScore(foodLogs, userData);
-      const exerciseScore = this.calculateExerciseScore(exerciseLogs, userData);
-      const sleepScore = this.calculateSleepScore(sleepLogs);
-      const waterScore = this.calculateWaterScore(waterLogs, userData);
+      // ใช้ OpenRouter AI วิเคราะห์ข้อมูล
+      let aiAnalysis: string;
+      try {
+        aiAnalysis = await this.openRouterService.analyzeHealthData(
+          userData,
+          healthData,
+          'การวิเคราะห์สุขภาพโดยรวม'
+        );
+      } catch (aiError) {
+        this.logger.warn(`AI analysis failed, using fallback: ${aiError.message}`);
+        aiAnalysis = this.generateFallbackHealthAnalysis(userData, healthData);
+      }
 
-      // คำนวณคะแนนรวม
-      const overallScore = Math.round(
-        (nutritionScore + exerciseScore + sleepScore + waterScore) / 4,
-      );
-
-      // สร้างคำแนะนำ
-      const recommendations = this.generateRecommendations({
-        nutritionScore,
-        exerciseScore,
-        sleepScore,
-        waterScore,
-        userData,
-        foodLogs,
-        exerciseLogs,
-        sleepLogs,
-        waterLogs,
-        healthGoals,
-      });
-
-      // สร้างข้อมูลเชิงลึก
-      const insights = this.generateInsights({
-        nutritionScore,
-        exerciseScore,
-        sleepScore,
-        waterScore,
-        userData,
-        foodLogs,
-        exerciseLogs,
-        sleepLogs,
-        waterLogs,
-      });
-
-      // ระบุปัจจัยเสี่ยง
-      const riskFactors = this.identifyRiskFactors({
-        nutritionScore,
-        exerciseScore,
-        sleepScore,
-        waterScore,
-        userData,
-        foodLogs,
-        exerciseLogs,
-        sleepLogs,
-        waterLogs,
-      });
+      // คำนวณคะแนนสุขภาพ
+      const healthScores = this.calculateHealthScores(healthData);
 
       return {
-        nutritionScore,
-        exerciseScore,
-        sleepScore,
-        waterScore,
-        overallScore,
-        recommendations,
-        insights,
-        riskFactors,
+        user: userData,
+        healthScores,
+        aiAnalysis,
+        recommendations: await this.generateAIRecommendations(userId),
+        timestamp: new Date().toISOString(),
       };
     } catch (error) {
-      throw new Error(`Failed to analyze user health: ${error.message}`);
+      this.logger.error(`Failed to analyze user health for user ${userId}`, error);
+      throw error;
     }
   }
 
-  // สร้างคำแนะนำจาก AI
-  async generateAIRecommendations(userId: number): Promise<AIRecommendation[]> {
+  /**
+   * สร้างคำแนะนำจาก AI
+   */
+  async generateAIRecommendations(userId: number): Promise<any> {
     try {
-      const healthAnalysis = await this.analyzeUserHealth(userId);
       const userData = await this.supabaseService.getUserById(userId);
-      const healthGoals =
-        await this.supabaseService.getHealthGoalsByUserId(userId);
+      const healthMetrics = await this.getHealthMetricsForRecommendations(userId);
 
-      const recommendations: AIRecommendation[] = [];
-
-      // คำแนะนำด้านโภชนาการ
-      if (healthAnalysis.nutritionScore < 70) {
-        recommendations.push({
-          type: 'nutrition',
-          title: 'ปรับปรุงโภชนาการ',
-          description: this.getNutritionRecommendation(
-            healthAnalysis.nutritionScore,
-            userData,
-          ),
-          priority: healthAnalysis.nutritionScore < 50 ? 'high' : 'medium',
-          actionable: true,
-          estimatedImpact: 0.8,
-          timeToImplement: '1-2 สัปดาห์',
-        });
-      }
-
-      // คำแนะนำด้านการออกกำลังกาย
-      if (healthAnalysis.exerciseScore < 70) {
-        recommendations.push({
-          type: 'exercise',
-          title: 'เพิ่มการออกกำลังกาย',
-          description: this.getExerciseRecommendation(
-            healthAnalysis.exerciseScore,
-            userData,
-          ),
-          priority: healthAnalysis.exerciseScore < 50 ? 'high' : 'medium',
-          actionable: true,
-          estimatedImpact: 0.9,
-          timeToImplement: '2-3 สัปดาห์',
-        });
-      }
-
-      // คำแนะนำด้านการนอน
-      if (healthAnalysis.sleepScore < 70) {
-        recommendations.push({
-          type: 'sleep',
-          title: 'ปรับปรุงคุณภาพการนอน',
-          description: this.getSleepRecommendation(healthAnalysis.sleepScore),
-          priority: healthAnalysis.sleepScore < 50 ? 'high' : 'medium',
-          actionable: true,
-          estimatedImpact: 0.7,
-          timeToImplement: '1 สัปดาห์',
-        });
-      }
-
-      // คำแนะนำด้านการดื่มน้ำ
-      if (healthAnalysis.waterScore < 70) {
-        recommendations.push({
-          type: 'lifestyle',
-          title: 'เพิ่มการดื่มน้ำ',
-          description: this.getWaterRecommendation(
-            healthAnalysis.waterScore,
-            userData,
-          ),
-          priority: 'medium',
-          actionable: true,
-          estimatedImpact: 0.6,
-          timeToImplement: '1 สัปดาห์',
-        });
-      }
-
-      // คำแนะนำด้านเป้าหมายสุขภาพ
-      if (healthGoals.length > 0) {
-        const activeGoals = healthGoals.filter(
-          (goal) => goal.status === 'active',
+      // ใช้ OpenRouter AI สร้างคำแนะนำ
+      let aiRecommendations: string;
+      try {
+        aiRecommendations = await this.openRouterService.generateHealthRecommendations(
+          userData,
+          healthMetrics
         );
-        if (activeGoals.length > 0) {
-          recommendations.push({
-            type: 'goal',
-            title: 'ติดตามเป้าหมายสุขภาพ',
-            description: this.getGoalRecommendation(activeGoals),
-            priority: 'medium',
-            actionable: true,
-            estimatedImpact: 0.5,
-            timeToImplement: 'ต่อเนื่อง',
-          });
-        }
+      } catch (aiError) {
+        this.logger.warn(`AI recommendations failed, using fallback: ${aiError.message}`);
+        aiRecommendations = this.generateFallbackRecommendations(userData, healthMetrics);
       }
 
-      return recommendations;
+      return {
+        recommendations: aiRecommendations,
+        generatedAt: new Date().toISOString(),
+        confidence: 0.85, // AI confidence score
+      };
     } catch (error) {
-      throw new Error(
-        `Failed to generate AI recommendations: ${error.message}`,
-      );
+      this.logger.error(`Failed to generate AI recommendations for user ${userId}`, error);
+      // Fallback to basic recommendations if AI fails
+      return this.generateBasicRecommendations(userId);
     }
   }
 
-  // บันทึกข้อมูลเชิงลึกจาก AI
-  async saveAIInsight(userId: number, insightData: any) {
+  /**
+   * บันทึกข้อมูลเชิงลึกจาก AI
+   */
+  async saveAIInsight(userId: number, insightData: any): Promise<any> {
     try {
       const insight = {
         user_id: userId,
-        insight_type: insightData.type || 'health_trend',
-        title: insightData.title,
-        description: insightData.description,
+        insight_type: insightData.type || 'health_analysis',
+        title: insightData.title || 'การวิเคราะห์สุขภาพจาก AI',
+        description: insightData.description || insightData.analysis || '',
         confidence_score: insightData.confidence || 0.8,
-        data_sources: insightData.dataSources || [],
+        data_sources: insightData.dataSources || ['health_logs', 'user_profile'],
         actionable_items: insightData.actionableItems || [],
         created_at: new Date().toISOString(),
-        expires_at: new Date(
-          Date.now() + 30 * 24 * 60 * 60 * 1000,
-        ).toISOString(), // 30 วัน
-        is_implemented: false,
       };
 
-      return await this.supabaseService.createAIInsight(insight);
+      const result = await this.supabaseService.createAIInsight(insight);
+      this.logger.log(`AI insight saved for user ${userId}: ${result.id}`);
+      
+      return result;
     } catch (error) {
-      throw new Error(`Failed to save AI insight: ${error.message}`);
+      this.logger.error(`Failed to save AI insight for user ${userId}`, error);
+      throw error;
     }
   }
 
@@ -856,5 +756,143 @@ export class AIService {
         `Failed to get exercise recommendations: ${error.message}`,
       );
     }
+  }
+
+  /**
+   * ดึงข้อมูลสุขภาพสำหรับการวิเคราะห์
+   */
+  private async getHealthDataForAnalysis(userId: number): Promise<any> {
+    const [foodLogs, exerciseLogs, sleepLogs, waterLogs, healthGoals] = await Promise.all([
+      this.supabaseService.getFoodLogs(userId, {}),
+      this.supabaseService.getExerciseLogs(userId, {}),
+      this.supabaseService.getSleepLogsByUserId(userId),
+      this.supabaseService.getWaterLogsByUserId(userId),
+      this.supabaseService.getHealthGoalsByUserId(userId),
+    ]);
+
+    return {
+      foodLogs,
+      exerciseLogs,
+      sleepLogs,
+      waterLogs,
+      healthGoals,
+    };
+  }
+
+  /**
+   * คำนวณคะแนนสุขภาพ
+   */
+  private calculateHealthScores(healthData: any): any {
+    const userData = healthData.userData || {};
+    const nutritionScore = this.calculateNutritionScore(healthData.foodLogs, userData);
+    const exerciseScore = this.calculateExerciseScore(healthData.exerciseLogs, userData);
+    const sleepScore = this.calculateSleepScore(healthData.sleepLogs);
+    const waterScore = this.calculateWaterScore(healthData.waterLogs, userData);
+
+    const overallScore = Math.round(
+      (nutritionScore + exerciseScore + sleepScore + waterScore) / 4
+    );
+
+    return {
+      nutritionScore,
+      exerciseScore,
+      sleepScore,
+      waterScore,
+      overallScore,
+    };
+  }
+
+  /**
+   * ดึงข้อมูลสุขภาพสำหรับการสร้างคำแนะนำ
+   */
+  private async getHealthMetricsForRecommendations(userId: number): Promise<any> {
+    const [healthAnalysis, healthGoals] = await Promise.all([
+      this.analyzeUserHealth(userId),
+      this.supabaseService.getHealthGoalsByUserId(userId),
+    ]);
+
+    return {
+      healthAnalysis,
+      healthGoals,
+      userId,
+    };
+  }
+
+  /**
+   * สร้างคำแนะนำพื้นฐาน (fallback)
+   */
+  private async generateBasicRecommendations(userId: number): Promise<any> {
+    // Fallback recommendations if AI fails
+    return {
+      recommendations: [
+        'เพิ่มการรับประทานผักและผลไม้',
+        'ออกกำลังกายอย่างน้อย 30 นาทีต่อวัน',
+        'นอนหลับให้เพียงพอ 7-9 ชั่วโมง',
+        'ดื่มน้ำให้เพียงพอ 8 แก้วต่อวัน',
+        'ติดตามเป้าหมายสุขภาพอย่างสม่ำเสมอ',
+      ],
+      generatedAt: new Date().toISOString(),
+      confidence: 0.6,
+      source: 'basic_fallback',
+    };
+  }
+
+  /**
+   * สร้างการวิเคราะห์สุขภาพแบบ fallback
+   */
+  private generateFallbackHealthAnalysis(userData: any, healthData: any): string {
+    const analysis: string[] = [];
+    
+    if (healthData.foodLogs && healthData.foodLogs.length > 0) {
+      analysis.push('ข้อมูลโภชนาการ: มีการบันทึกอาหารอย่างสม่ำเสมอ');
+    } else {
+      analysis.push('ข้อมูลโภชนาการ: ควรเริ่มบันทึกอาหารเพื่อติดตามสุขภาพ');
+    }
+    
+    if (healthData.exerciseLogs && healthData.exerciseLogs.length > 0) {
+      analysis.push('ข้อมูลการออกกำลังกาย: มีการออกกำลังกายอย่างสม่ำเสมอ');
+    } else {
+      analysis.push('ข้อมูลการออกกำลังกาย: ควรเพิ่มการออกกำลังกาย');
+    }
+    
+    if (healthData.sleepLogs && healthData.sleepLogs.length > 0) {
+      analysis.push('ข้อมูลการนอน: มีการติดตามการนอน');
+    } else {
+      analysis.push('ข้อมูลการนอน: ควรติดตามคุณภาพการนอน');
+    }
+    
+    if (healthData.waterLogs && healthData.waterLogs.length > 0) {
+      analysis.push('ข้อมูลการดื่มน้ำ: มีการติดตามการดื่มน้ำ');
+    } else {
+      analysis.push('ข้อมูลการดื่มน้ำ: ควรติดตามการดื่มน้ำ');
+    }
+    
+    return analysis.join('\n');
+  }
+
+  /**
+   * สร้างคำแนะนำแบบ fallback
+   */
+  private generateFallbackRecommendations(userData: any, healthMetrics: any): string {
+    const recommendations: string[] = [];
+    
+    // Basic health recommendations based on user data
+    if (userData.age && userData.age > 40) {
+      recommendations.push('ควรตรวจสุขภาพประจำปีอย่างสม่ำเสมอ');
+    }
+    
+    if (userData.weight_kg && userData.height_cm) {
+      const bmi = userData.weight_kg / Math.pow(userData.height_cm / 100, 2);
+      if (bmi > 25) {
+        recommendations.push('ควรควบคุมน้ำหนักให้อยู่ในเกณฑ์ปกติ');
+      }
+    }
+    
+    recommendations.push('ควรรับประทานอาหารให้ครบ 5 หมู่');
+    recommendations.push('ควรออกกำลังกายอย่างน้อย 150 นาทีต่อสัปดาห์');
+    recommendations.push('ควรนอนหลับให้เพียงพอ 7-9 ชั่วโมงต่อคืน');
+    recommendations.push('ควรดื่มน้ำให้เพียงพอ 8-10 แก้วต่อวัน');
+    
+    return recommendations.join('\n');
   }
 }

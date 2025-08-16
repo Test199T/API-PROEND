@@ -9,6 +9,7 @@ export * from './water-log.service';
 export * from './notification.service';
 export * from './dashboard.service';
 export * from './ai.service';
+export * from './openrouter.service';
 export * from './chat.service';
 export * from './supabase.service';
 
