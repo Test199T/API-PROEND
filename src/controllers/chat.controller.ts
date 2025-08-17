@@ -63,6 +63,14 @@ export class ChatController {
   async getChatSession(@Request() req, @Param('sessionId') sessionId: string) {
     const userId = req.user.id;
 
+    // ตรวจสอบ sessionId
+    if (!sessionId || isNaN(parseInt(sessionId))) {
+      return {
+        success: false,
+        error: 'Invalid session ID',
+      };
+    }
+
     try {
       const messages = await this.chatService.getChatMessages(
         parseInt(sessionId),
@@ -92,6 +100,14 @@ export class ChatController {
   ) {
     const userId = req.user.id;
 
+    // ตรวจสอบ sessionId
+    if (!sessionId || isNaN(parseInt(sessionId))) {
+      return {
+        success: false,
+        error: 'Invalid session ID',
+      };
+    }
+
     try {
       const response = await this.chatService.sendMessage(
         parseInt(sessionId),
@@ -114,6 +130,14 @@ export class ChatController {
 
   @Get('sessions/:sessionId/messages')
   async getChatMessages(@Request() req, @Param('sessionId') sessionId: string) {
+    // ตรวจสอบ sessionId
+    if (!sessionId || isNaN(parseInt(sessionId))) {
+      return {
+        success: false,
+        error: 'Invalid session ID',
+      };
+    }
+
     try {
       const messages = await this.chatService.getChatMessages(
         parseInt(sessionId),
@@ -236,6 +260,14 @@ export class ChatController {
     @Request() req,
     @Param('sessionId') sessionId: string,
   ) {
+    // ตรวจสอบ sessionId
+    if (!sessionId || isNaN(parseInt(sessionId))) {
+      return {
+        success: false,
+        error: 'Invalid session ID',
+      };
+    }
+
     try {
       await this.chatService.closeChatSession(parseInt(sessionId));
       return {

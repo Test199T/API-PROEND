@@ -36,6 +36,35 @@ export class RegisterDto {
   @IsOptional()
   @IsString()
   username?: string;
+
+  // เพิ่ม properties ที่ frontend ส่งมา
+  @IsOptional()
+  @IsNumber()
+  age?: number;
+
+  @IsOptional()
+  @IsIn(['male', 'female', 'other'])
+  gender?: string;
+
+  @IsOptional()
+  @IsDateString()
+  birth_date?: string;
+
+  @IsOptional()
+  @IsDateString()
+  dateOfBirth?: string;
+
+  @IsOptional()
+  @IsNumber()
+  height?: number;
+
+  @IsOptional()
+  @IsNumber()
+  weight?: number;
+
+  @IsOptional()
+  @IsIn(['sedentary', 'lightly_active', 'moderately_active', 'very_active', 'extremely_active'])
+  activity_level?: string;
 }
 
 export class UpdateProfileDto {

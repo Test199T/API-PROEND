@@ -54,6 +54,18 @@ export class CreateUserDto {
   @IsOptional()
   @IsEnum(ActivityLevel)
   activity_level?: ActivityLevel;
+
+  // เพิ่ม properties ที่ frontend ส่งมา
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(120)
+  age?: number;
+
+  // สำหรับ frontend ที่ใช้ birth_date
+  @IsOptional()
+  @IsDateString()
+  birth_date?: string;
 }
 
 export class UpdateUserDto {
@@ -88,6 +100,18 @@ export class UpdateUserDto {
   @IsOptional()
   @IsEnum(ActivityLevel)
   activity_level?: ActivityLevel;
+
+  // เพิ่ม properties ที่ frontend ส่งมา
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(120)
+  age?: number;
+
+  // สำหรับ frontend ที่ใช้ birth_date
+  @IsOptional()
+  @IsDateString()
+  birth_date?: string;
 }
 
 export class UpdatePasswordDto {
