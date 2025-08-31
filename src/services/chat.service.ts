@@ -12,13 +12,106 @@ export class ChatService {
   ) {}
 
   /**
+   * สร้างหัวข้อเซสชันแชทอัตโนมัติด้วย AI
+   */
+  private async generateAutomaticTitle(userMessage: string, userData?: any): Promise<string> {
+    try {
+      const prompt = `คุณเป็นผู้ช่วยด้านสุขภาพที่เก่งในการสรุปหัวข้อการสนทนา
+
+ข้อความของผู้ใช้: "${userMessage}"
+
+กรุณาสรุปหัวข้อการสนทนาที่สั้น กระชับ และสื่อความหมายในภาษาไทย โดย:
+1. ใช้คำที่เข้าใจง่าย
+2. สื่อถึงประเด็นหลักที่ผู้ใช้สนใจ
+3. ไม่เกิน 15 คำ
+4. ใช้ภาษาที่เป็นมิตร
+
+ตัวอย่างหัวข้อที่ดี:
+- "คำแนะนำการออกกำลังกาย"
+- "ปรึกษาปัญหาการนอน"
+- "วางแผนโภชนาการ"
+- "ติดตามน้ำหนักและสุขภาพ"
+
+หัวข้อที่เหมาะสม:`;
+
+      const title = await this.openRouterService.generateText(prompt, 0.3, 50);
+      
+      // ทำความสะอาดข้อความที่ได้จาก AI
+      const cleanTitle = title
+        .replace(/["""]/g, '') // ลบเครื่องหมายคำพูด
+        .replace(/^\s+|\s+$/g, '') // ลบช่องว่างหน้า-หลัง
+        .replace(/\n/g, ' ') // แทนที่ขึ้นบรรทัดใหม่ด้วยช่องว่าง
+        .trim();
+
+      return cleanTitle || 'แชทสุขภาพ';
+    } catch (error) {
+      this.logger.warn(`Failed to generate automatic title: ${error.message}`);
+      return this.generateFallbackTitle(userMessage);
+    }
+  }
+
+  /**
+   * สร้างหัวข้อแบบ fallback เมื่อ AI ไม่สามารถทำงานได้
+   */
+  private generateFallbackTitle(userMessage: string): string {
+    const message = userMessage.toLowerCase();
+    
+    // ตรวจสอบคำสำคัญในข้อความ
+    if (message.includes('อาหาร') || message.includes('กิน') || message.includes('โภชนาการ') || message.includes('แคลอรี่')) {
+      return 'ปรึกษาปัญหาด้านโภชนาการ';
+    }
+    if (message.includes('ออกกำลังกาย') || message.includes('ฟิตเนส') || message.includes('กีฬา')) {
+      return 'คำแนะนำการออกกำลังกาย';
+    }
+    if (message.includes('นอน') || message.includes('พักผ่อน') || message.includes('นอนไม่หลับ')) {
+      return 'ปรึกษาปัญหาการนอน';
+    }
+    if (message.includes('น้ำหนัก') || message.includes('ลดน้ำหนัก') || message.includes('เพิ่มน้ำหนัก')) {
+      return 'ติดตามน้ำหนักและสุขภาพ';
+    }
+    if (message.includes('สุขภาพ') || message.includes('ตรวจ') || message.includes('อาการ')) {
+      return 'ปรึกษาปัญหาสุขภาพทั่วไป';
+    }
+    
+    return `แชทสุขภาพ ${new Date().toLocaleDateString('th-TH')}`;
+  }
+
+  /**
+   * อัพเดทหัวข้อเซสชันแชทตามเนื้อหาการสนทนา
+   */
+  async updateSessionTitle(sessionId: number, newTitle: string): Promise<any> {
+    try {
+      const result = await this.supabaseService.updateChatSession(sessionId, {
+        session_title: newTitle,
+        updated_at: new Date().toISOString(),
+      });
+      
+      this.logger.log(`Session ${sessionId} title updated to: ${newTitle}`);
+      return result;
+    } catch (error) {
+      this.logger.error(`Failed to update session title for ${sessionId}`, error);
+      throw error;
+    }
+  }
+
+  /**
    * สร้างเซสชันแชทใหม่
    */
-  async createChatSession(userId: number, sessionTitle?: string): Promise<any> {
+  async createChatSession(userId: number, sessionTitle?: string, initialMessage?: string): Promise<any> {
     try {
+      let finalTitle = sessionTitle;
+      
+      // ถ้าไม่มีหัวข้อและมีข้อความเริ่มต้น ให้สร้างหัวข้ออัตโนมัติ
+      if (!finalTitle && initialMessage) {
+        const userData = await this.supabaseService.getUserById(userId);
+        finalTitle = await this.generateAutomaticTitle(initialMessage, userData);
+      } else if (!finalTitle) {
+        finalTitle = `แชทสุขภาพ ${new Date().toLocaleDateString('th-TH')}`;
+      }
+
       const session = {
         user_id: userId,
-        session_title: sessionTitle || `แชทสุขภาพ ${new Date().toLocaleDateString('th-TH')}`,
+        session_title: finalTitle,
         ai_model: 'OpenRouter AI',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -26,7 +119,7 @@ export class ChatService {
       };
 
       const result = await this.supabaseService.createChatSession(session);
-      this.logger.log(`Chat session created for user ${userId}: ${result.id}`);
+      this.logger.log(`Chat session created for user ${userId}: ${result.id} with title: ${finalTitle}`);
       
       return result;
     } catch (error) {

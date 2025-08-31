@@ -189,6 +189,23 @@ export class OpenRouterService {
   }
 
   /**
+   * สร้างข้อความด้วย AI (สำหรับหัวข้อหรือข้อความสั้นๆ)
+   */
+  async generateText(prompt: string, temperature: number = 0.7, maxTokens: number = 100): Promise<string> {
+    try {
+      const messages: OpenRouterMessage[] = [
+        { role: 'system', content: 'คุณเป็นผู้ช่วยที่เก่งในการสรุปและสร้างข้อความที่กระชับ ชัดเจน และสื่อความหมาย' },
+        { role: 'user', content: prompt }
+      ];
+
+      return await this.chatCompletion(messages, undefined, temperature, maxTokens);
+    } catch (error) {
+      this.logger.error('Failed to generate text', error);
+      throw error;
+    }
+  }
+
+  /**
    * สร้าง system prompt สำหรับ health analysis
    */
   createHealthAnalysisPrompt(userData: any, analysisType: string): OpenRouterMessage[] {

@@ -284,12 +284,26 @@ export class AIController {
   @Post('chat/start')
   @HttpCode(HttpStatus.CREATED)
   async startChatSession(
-    @Body() body: { title?: string },
+    @Body() body: { title?: string; initial_message?: string },
     @CurrentUser('id') userId: number,
   ): Promise<ResponseDto<any>> {
     try {
-      const session = await this.chatService.createChatSession(userId, body.title);
-      return ResponseDto.success(session, 'Chat session started successfully');
+      // สร้างเซสชันแชทใหม่ (พร้อมหัวข้ออัตโนมัติถ้ามีข้อความเริ่มต้น)
+      const session = await this.chatService.createChatSession(userId, body.title, body.initial_message);
+      
+      // ถ้ามีข้อความเริ่มต้น ให้ส่งข้อความทันที
+      let response = { session };
+      
+      if (body.initial_message) {
+        const messageResult = await this.chatService.sendMessage(
+          session.id,
+          userId,
+          body.initial_message
+        );
+        response = { ...response, ...messageResult };
+      }
+      
+      return ResponseDto.success(response, 'Chat session started successfully');
     } catch (error) {
       return ResponseDto.error(`Failed to start chat session: ${error.message}`);
     }

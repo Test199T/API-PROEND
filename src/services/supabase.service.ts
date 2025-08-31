@@ -1121,6 +1121,17 @@ export class SupabaseService implements OnModuleInit {
     return data;
   }
 
+  async getChatSessionById(sessionId: number) {
+    const { data, error } = await this.supabase
+      .from('chat_sessions')
+      .select('*')
+      .eq('id', sessionId)
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
   async updateChatSession(sessionId: number, updateData: any) {
     const { data, error } = await this.supabase
       .from('chat_sessions')
