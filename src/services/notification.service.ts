@@ -17,14 +17,15 @@ export class NotificationService {
     return await this.supabaseService.markNotificationAsRead(id);
   }
 
-
-
   // User notification preferences (from user preferences)
   async getUserNotificationPreferences(userId: string) {
     return await this.supabaseService.getUserNotificationPreferences(userId);
   }
 
   async updateUserNotificationPreferences(userId: string, preferences: any) {
-    return await this.supabaseService.updateUserNotificationPreferences(userId, preferences);
+    return await this.supabaseService.updateUserNotificationPreferences(
+      userId,
+      preferences,
+    );
   }
 }

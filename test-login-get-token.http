@@ -1,0 +1,42 @@
+# VITA WISE AI - Login และดึง JWT Token
+# ใช้สำหรับดึง JWT token เพื่อใช้ทดสอบ API อื่นๆ
+
+### สร้าง account ใหม่ (ถ้ายังไม่มี)
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "email": "asngiun@outlook.com",
+  "password": "awdawdasd123",
+  "firstName": "Test",
+  "lastName": "User"
+}
+
+### Login with existing user
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "password123"
+}
+
+###
+# หลังจาก login สำเร็จ คุณจะได้ response แบบนี้:
+# {
+#   "success": true,
+#   "data": {
+#     "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+#     "user": {
+#       "id": "xxx",
+#       "email": "asngiun@outlook.com"
+#     }
+#   }
+# }
+#
+# ให้คัดลอก access_token ไปใช้ในไฟล์ test-profile-api.http
+# แทนที่ YOUR_JWT_TOKEN_HERE ด้วย token ที่ได้
+
+### ทดสอบ endpoint อื่นๆ ด้วย token (ตัวอย่าง)
+GET http://localhost:3000/users/profile
+Authorization: Bearer YOUR_JWT_TOKEN_HERE

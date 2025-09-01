@@ -24,6 +24,4 @@ export class SleepLogService {
   async deleteSleepLog(id: string, userId: number) {
     return await this.supabaseService.deleteSleepLog(id, userId);
   }
-
-
 }

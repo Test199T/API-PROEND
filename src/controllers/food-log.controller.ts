@@ -71,9 +71,15 @@ export class FoodLogController {
       const userId = req.user.id;
       const stats = await this.supabaseService.getFoodLogStats(userId, date);
 
-      return ResponseDto.success(stats, 'Food log stats retrieved successfully');
+      return ResponseDto.success(
+        stats,
+        'Food log stats retrieved successfully',
+      );
     } catch (error) {
-      return ResponseDto.error('Failed to retrieve food log stats', error.message);
+      return ResponseDto.error(
+        'Failed to retrieve food log stats',
+        error.message,
+      );
     }
   }
 
@@ -86,9 +92,15 @@ export class FoodLogController {
       const userId = req.user.id;
       const trends = await this.supabaseService.getFoodLogTrends(userId, days);
 
-      return ResponseDto.success(trends, 'Food log trends retrieved successfully');
+      return ResponseDto.success(
+        trends,
+        'Food log trends retrieved successfully',
+      );
     } catch (error) {
-      return ResponseDto.error('Failed to retrieve food log trends', error.message);
+      return ResponseDto.error(
+        'Failed to retrieve food log trends',
+        error.message,
+      );
     }
   }
 
@@ -101,7 +113,10 @@ export class FoodLogController {
       const userId = req.user.id;
       const analysis = await this.aiService.analyzeNutrition(userId, date);
 
-      return ResponseDto.success(analysis, 'Nutrition analysis completed successfully');
+      return ResponseDto.success(
+        analysis,
+        'Nutrition analysis completed successfully',
+      );
     } catch (error) {
       return ResponseDto.error('Failed to analyze nutrition', error.message);
     }
@@ -114,9 +129,15 @@ export class FoodLogController {
       const recommendations =
         await this.aiService.getFoodRecommendations(userId);
 
-      return ResponseDto.success(recommendations, 'Food recommendations retrieved successfully');
+      return ResponseDto.success(
+        recommendations,
+        'Food recommendations retrieved successfully',
+      );
     } catch (error) {
-      return ResponseDto.error('Failed to get food recommendations', error.message);
+      return ResponseDto.error(
+        'Failed to get food recommendations',
+        error.message,
+      );
     }
   }
 
@@ -188,9 +209,15 @@ export class FoodLogController {
         query,
       );
 
-      return ResponseDto.success(foodLogs, `Food logs for ${mealType} retrieved successfully`);
+      return ResponseDto.success(
+        foodLogs,
+        `Food logs for ${mealType} retrieved successfully`,
+      );
     } catch (error) {
-      return ResponseDto.error(`Failed to retrieve food logs for ${mealType}`, error.message);
+      return ResponseDto.error(
+        `Failed to retrieve food logs for ${mealType}`,
+        error.message,
+      );
     }
   }
 
@@ -208,9 +235,15 @@ export class FoodLogController {
         endDate,
       );
 
-      return ResponseDto.success(summary, 'Calories summary retrieved successfully');
+      return ResponseDto.success(
+        summary,
+        'Calories summary retrieved successfully',
+      );
     } catch (error) {
-      return ResponseDto.error('Failed to retrieve calories summary', error.message);
+      return ResponseDto.error(
+        'Failed to retrieve calories summary',
+        error.message,
+      );
     }
   }
 }

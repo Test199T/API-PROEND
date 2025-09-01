@@ -26,7 +26,11 @@ export class FoodLogService {
   }
 
   async getFoodLogsByMealType(userId: number, mealType: string, query?: any) {
-    return await this.supabaseService.getFoodLogsByMealType(userId, mealType, query);
+    return await this.supabaseService.getFoodLogsByMealType(
+      userId,
+      mealType,
+      query,
+    );
   }
 
   async getFoodLogStats(userId: number, date?: string) {
@@ -36,6 +40,4 @@ export class FoodLogService {
   async getFoodLogTrends(userId: number, days: number = 7) {
     return await this.supabaseService.getFoodLogTrends(userId, days);
   }
-
-
 }

@@ -18,10 +18,13 @@ export class AuthService {
   constructor(private configService: ConfigService) {
     const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
     const supabaseAnonKey = this.configService.get<string>('SUPABASE_ANON_KEY');
-    this.jwtSecret = this.configService.get<string>('JWT_SECRET') || 'your-secret-key';
+    this.jwtSecret =
+      this.configService.get<string>('JWT_SECRET') || 'your-secret-key';
 
     if (!supabaseUrl || !supabaseAnonKey) {
-      this.logger.error('SUPABASE_URL and SUPABASE_ANON_KEY must be set in environment variables');
+      this.logger.error(
+        'SUPABASE_URL and SUPABASE_ANON_KEY must be set in environment variables',
+      );
       throw new Error('Supabase configuration is missing');
     }
 
@@ -41,13 +44,20 @@ export class AuthService {
         });
 
       if (authError) {
-        this.logger.error(`Supabase auth error: ${authError.message}`, authError);
-        throw new BadRequestException(`Authentication error: ${authError.message}`);
+        this.logger.error(
+          `Supabase auth error: ${authError.message}`,
+          authError,
+        );
+        throw new BadRequestException(
+          `Authentication error: ${authError.message}`,
+        );
       }
 
       if (!authData.user) {
         this.logger.error('No user data returned from Supabase auth');
-        throw new BadRequestException('Registration failed - no user data received');
+        throw new BadRequestException(
+          'Registration failed - no user data received',
+        );
       }
 
       this.logger.log(`User created in auth: ${authData.user.id}`);
@@ -75,16 +85,20 @@ export class AuthService {
 
       if (userError) {
         this.logger.error(`Database error: ${userError.message}`, userError);
-        
+
         // If user creation fails, we should clean up the auth user
         try {
           await this.supabase.auth.admin.deleteUser(authData.user.id);
           this.logger.log(`Cleaned up auth user: ${authData.user.id}`);
         } catch (cleanupError) {
-          this.logger.error(`Failed to cleanup auth user: ${cleanupError.message}`);
+          this.logger.error(
+            `Failed to cleanup auth user: ${cleanupError.message}`,
+          );
         }
-        
-        throw new BadRequestException(`Failed to create user profile: ${userError.message}`);
+
+        throw new BadRequestException(
+          `Failed to create user profile: ${userError.message}`,
+        );
       }
 
       this.logger.log(`User profile created successfully: ${userData.id}`);
@@ -101,20 +115,24 @@ export class AuthService {
       };
     } catch (error) {
       this.logger.error(`Registration failed for ${registerDto.email}:`, error);
-      
+
       if (error instanceof BadRequestException) {
         throw error;
       }
-      
+
       // Handle specific error types
       if (error.message?.includes('fetch failed')) {
-        throw new BadRequestException('Database connection failed. Please try again later.');
+        throw new BadRequestException(
+          'Database connection failed. Please try again later.',
+        );
       }
-      
+
       if (error.message?.includes('network')) {
-        throw new BadRequestException('Network error. Please check your connection and try again.');
+        throw new BadRequestException(
+          'Network error. Please check your connection and try again.',
+        );
       }
-      
+
       throw new BadRequestException(`Registration failed: ${error.message}`);
     }
   }
@@ -138,14 +156,18 @@ export class AuthService {
       }
 
       // Generate JWT tokens
-      const payload = { 
-        sub: userData.id, 
+      const payload = {
+        sub: userData.id,
         email: userData.email,
-        username: userData.username 
+        username: userData.username,
       };
-      
-      const accessToken = jwt.sign(payload, this.jwtSecret, { expiresIn: '24h' });
-      const refreshToken = jwt.sign(payload, this.jwtSecret, { expiresIn: '7d' });
+
+      const accessToken = jwt.sign(payload, this.jwtSecret, {
+        expiresIn: '24h',
+      });
+      const refreshToken = jwt.sign(payload, this.jwtSecret, {
+        expiresIn: '7d',
+      });
 
       return {
         access_token: accessToken,

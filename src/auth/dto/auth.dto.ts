@@ -63,7 +63,13 @@ export class RegisterDto {
   weight?: number;
 
   @IsOptional()
-  @IsIn(['sedentary', 'lightly_active', 'moderately_active', 'very_active', 'extremely_active'])
+  @IsIn([
+    'sedentary',
+    'lightly_active',
+    'moderately_active',
+    'very_active',
+    'extremely_active',
+  ])
   activity_level?: string;
 }
 

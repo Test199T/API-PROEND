@@ -176,7 +176,7 @@ export class WaterLogController {
       if (isNaN(numericUserId)) {
         return ResponseDto.error('Invalid user ID format');
       }
-      
+
       const goal = await this.supabaseService.getDailyWaterGoal(numericUserId);
       return ResponseDto.success(
         goal,
@@ -201,7 +201,7 @@ export class WaterLogController {
       if (isNaN(numericUserId)) {
         return ResponseDto.error('Invalid user ID format');
       }
-      
+
       const goal = await this.supabaseService.setDailyWaterGoal(
         numericUserId,
         goalDto,
@@ -222,8 +222,9 @@ export class WaterLogController {
       if (isNaN(numericUserId)) {
         return ResponseDto.error('Invalid user ID format');
       }
-      
-      const progress = await this.supabaseService.getTodayWaterProgress(numericUserId);
+
+      const progress =
+        await this.supabaseService.getTodayWaterProgress(numericUserId);
       return ResponseDto.success(
         progress,
         "Today's water progress retrieved successfully",
@@ -247,7 +248,7 @@ export class WaterLogController {
       if (isNaN(numericUserId)) {
         return ResponseDto.error('Invalid user ID format');
       }
-      
+
       const trends = await this.supabaseService.getWaterConsumptionTrends(
         numericUserId,
         days,
@@ -274,8 +275,9 @@ export class WaterLogController {
       if (isNaN(numericUserId)) {
         return ResponseDto.error('Invalid user ID format');
       }
-      
-      const insights = await this.supabaseService.getHydrationInsights(numericUserId);
+
+      const insights =
+        await this.supabaseService.getHydrationInsights(numericUserId);
       return ResponseDto.success(
         insights,
         'Hydration insights retrieved successfully',

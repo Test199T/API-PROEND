@@ -1,8 +1,64 @@
-# 🔧 Troubleshooting Guide
+# � คู่มือแก้ปัญหา Frontend ไม่ดึงข้อมูลจาก Backend
 
-## ปัญหาที่พบบ่อยและการแก้ไข
+## ❗ **ปัญหาที่พบบ่อย**
 
-### 1. Error: "fetch failed" และ "Bad Request"
+### 1. 🚫 CORS Error
+```
+Access to fetch at 'http://localhost:3000' from origin 'http://localhost:5173' has been blocked by CORS policy
+```
+
+**วิธีแก้:**
+```typescript
+// src/main.ts (ใน Backend NestJS)
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  
+  // เพิ่ม CORS configuration
+  app.enableCors({
+    origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:3001'],
+    credentials: true,
+  });
+  
+  await app.listen(3000);
+}
+bootstrap();
+```
+
+### 2. 🔑 Token ไม่ถูกส่งใน Request Headers
+```javascript
+// ❌ ผิด - ไม่มี Authorization header
+fetch('/api/users/profile')
+
+// ✅ ถูก - มี Authorization header
+fetch('/api/users/profile', {
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  }
+})
+```
+
+### 3. 📡 Frontend ไม่ได้เรียก API จริง (ใช้ข้อมูล Mock)
+```javascript
+// ❌ ข้อมูล Mock
+const userData = {
+  name: 'Test User',
+  email: 'test@example.com'
+};
+
+// ✅ เรียก API จริง
+const response = await fetch('http://localhost:3000/users/profile/complete', {
+  headers: { 'Authorization': `Bearer ${token}` }
+});
+const userData = await response.json();
+```
+
+## 📋 **Common Issues & Solutions**
+
+### 1. Database Connection Issues
 
 #### สาเหตุ:
 - การเชื่อมต่อกับ OpenRouter API ล้มเหลว

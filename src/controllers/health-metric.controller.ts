@@ -55,7 +55,8 @@ export class HealthMetricController {
     @User('id') userId: number,
   ): Promise<ResponseDto<HealthMetricResponseDto[]>> {
     try {
-      const healthMetrics = await this.supabaseService.getHealthMetricsByUserId(userId);
+      const healthMetrics =
+        await this.supabaseService.getHealthMetricsByUserId(userId);
 
       return ResponseDto.success(
         healthMetrics,
@@ -75,8 +76,11 @@ export class HealthMetricController {
     @User('id') userId: number,
   ): Promise<ResponseDto<HealthMetricResponseDto>> {
     try {
-      const healthMetrics = await this.supabaseService.getHealthMetricsByUserId(userId);
-      const healthMetric = healthMetrics.find(metric => metric.id === parseInt(id));
+      const healthMetrics =
+        await this.supabaseService.getHealthMetricsByUserId(userId);
+      const healthMetric = healthMetrics.find(
+        (metric) => metric.id === parseInt(id),
+      );
 
       if (!healthMetric) {
         return ResponseDto.error('Health metric not found');
@@ -139,7 +143,10 @@ export class HealthMetricController {
         return ResponseDto.error('Invalid user ID format');
       }
 
-      const deleted = await this.supabaseService.deleteHealthMetric(id, numericUserId);
+      const deleted = await this.supabaseService.deleteHealthMetric(
+        id,
+        numericUserId,
+      );
 
       if (!deleted) {
         return ResponseDto.error('Health metric not found');

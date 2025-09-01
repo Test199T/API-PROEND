@@ -25,8 +25,16 @@ export class ExerciseLogService {
     return await this.supabaseService.deleteExerciseLog(id, userId);
   }
 
-  async getExerciseLogsByType(userId: number, exerciseType: string, query?: any) {
-    return await this.supabaseService.getExerciseLogsByType(userId, exerciseType, query);
+  async getExerciseLogsByType(
+    userId: number,
+    exerciseType: string,
+    query?: any,
+  ) {
+    return await this.supabaseService.getExerciseLogsByType(
+      userId,
+      exerciseType,
+      query,
+    );
   }
 
   async getExerciseLogStats(userId: number, date?: string) {
@@ -36,6 +44,4 @@ export class ExerciseLogService {
   async getExerciseLogTrends(userId: number, days: number = 7) {
     return await this.supabaseService.getExerciseLogTrends(userId, days);
   }
-
-
 }

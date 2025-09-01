@@ -39,8 +39,11 @@ export class AIController {
       }
 
       const userData = await this.supabaseService.getUserById(parseInt(userId));
-      const healthGoals = await this.supabaseService.getHealthGoalsByUserId(parseInt(userId));
-      const userPreferences = await this.supabaseService.getUserPreferencesByUserId(parseInt(userId));
+      const healthGoals = await this.supabaseService.getHealthGoalsByUserId(
+        parseInt(userId),
+      );
+      const userPreferences =
+        await this.supabaseService.getUserPreferencesByUserId(parseInt(userId));
 
       const profile = {
         user: userData,
@@ -48,9 +51,14 @@ export class AIController {
         preferences: userPreferences,
       };
 
-      return ResponseDto.success(profile, 'User profile retrieved successfully');
+      return ResponseDto.success(
+        profile,
+        'User profile retrieved successfully',
+      );
     } catch (error) {
-      return ResponseDto.error(`Failed to retrieve user profile: ${error.message}`);
+      return ResponseDto.error(
+        `Failed to retrieve user profile: ${error.message}`,
+      );
     }
   }
 
@@ -66,13 +74,23 @@ export class AIController {
       }
 
       const targetDate = date || new Date().toISOString().split('T')[0];
-      
-      const [dailySummary, healthMetrics, recentFoodLogs, recentExerciseLogs] = await Promise.all([
-        this.supabaseService.getDailyHealthSummary(parseInt(userId), targetDate),
-        this.supabaseService.getHealthMetricsByUserId(parseInt(userId)),
-        this.supabaseService.getFoodLogs(parseInt(userId), { date_from: targetDate, date_to: targetDate }),
-        this.supabaseService.getExerciseLogs(parseInt(userId), { exercise_date_from: targetDate, exercise_date_to: targetDate }),
-      ]);
+
+      const [dailySummary, healthMetrics, recentFoodLogs, recentExerciseLogs] =
+        await Promise.all([
+          this.supabaseService.getDailyHealthSummary(
+            parseInt(userId),
+            targetDate,
+          ),
+          this.supabaseService.getHealthMetricsByUserId(parseInt(userId)),
+          this.supabaseService.getFoodLogs(parseInt(userId), {
+            date_from: targetDate,
+            date_to: targetDate,
+          }),
+          this.supabaseService.getExerciseLogs(parseInt(userId), {
+            exercise_date_from: targetDate,
+            exercise_date_to: targetDate,
+          }),
+        ]);
 
       const summary = {
         date: targetDate,
@@ -82,9 +100,14 @@ export class AIController {
         exercise_logs: recentExerciseLogs,
       };
 
-      return ResponseDto.success(summary, 'Health summary retrieved successfully');
+      return ResponseDto.success(
+        summary,
+        'Health summary retrieved successfully',
+      );
     } catch (error) {
-      return ResponseDto.error(`Failed to retrieve health summary: ${error.message}`);
+      return ResponseDto.error(
+        `Failed to retrieve health summary: ${error.message}`,
+      );
     }
   }
 
@@ -99,8 +122,13 @@ export class AIController {
         return ResponseDto.error('Unauthorized access to food analysis');
       }
 
-      const analysis = await this.aiService.analyzeNutrition(parseInt(userId), date);
-      const recommendations = await this.aiService.getFoodRecommendations(parseInt(userId));
+      const analysis = await this.aiService.analyzeNutrition(
+        parseInt(userId),
+        date,
+      );
+      const recommendations = await this.aiService.getFoodRecommendations(
+        parseInt(userId),
+      );
 
       const result = {
         analysis,
@@ -108,7 +136,10 @@ export class AIController {
         timestamp: new Date().toISOString(),
       };
 
-      return ResponseDto.success(result, 'Food analysis completed successfully');
+      return ResponseDto.success(
+        result,
+        'Food analysis completed successfully',
+      );
     } catch (error) {
       return ResponseDto.error(`Failed to analyze food data: ${error.message}`);
     }
@@ -125,8 +156,13 @@ export class AIController {
         return ResponseDto.error('Unauthorized access to exercise analysis');
       }
 
-      const analysis = await this.aiService.analyzeExercise(parseInt(userId), date);
-      const recommendations = await this.aiService.getExerciseRecommendations(parseInt(userId));
+      const analysis = await this.aiService.analyzeExercise(
+        parseInt(userId),
+        date,
+      );
+      const recommendations = await this.aiService.getExerciseRecommendations(
+        parseInt(userId),
+      );
 
       const result = {
         analysis,
@@ -134,9 +170,14 @@ export class AIController {
         timestamp: new Date().toISOString(),
       };
 
-      return ResponseDto.success(result, 'Exercise analysis completed successfully');
+      return ResponseDto.success(
+        result,
+        'Exercise analysis completed successfully',
+      );
     } catch (error) {
-      return ResponseDto.error(`Failed to analyze exercise data: ${error.message}`);
+      return ResponseDto.error(
+        `Failed to analyze exercise data: ${error.message}`,
+      );
     }
   }
 
@@ -152,8 +193,10 @@ export class AIController {
       }
 
       const targetDate = date || new Date().toISOString().split('T')[0];
-      const sleepLogs = await this.supabaseService.getSleepLogsByUserId(parseInt(userId));
-      
+      const sleepLogs = await this.supabaseService.getSleepLogsByUserId(
+        parseInt(userId),
+      );
+
       // วิเคราะห์ข้อมูลการนอน
       const analysis = {
         total_sleep_hours: 0,
@@ -164,18 +207,24 @@ export class AIController {
       };
 
       if (sleepLogs.length > 0) {
-        const recentSleepLogs = sleepLogs.filter(log => 
-          new Date(log.sleep_date) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+        const recentSleepLogs = sleepLogs.filter(
+          (log) =>
+            new Date(log.sleep_date) >=
+            new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
         );
 
         if (recentSleepLogs.length > 0) {
-          analysis.total_sleep_hours = recentSleepLogs.reduce((sum, log) => 
-            sum + (log.total_sleep_hours || 0), 0
-          ) / recentSleepLogs.length;
+          analysis.total_sleep_hours =
+            recentSleepLogs.reduce(
+              (sum, log) => sum + (log.total_sleep_hours || 0),
+              0,
+            ) / recentSleepLogs.length;
 
-          analysis.average_sleep_quality = recentSleepLogs.reduce((sum, log) => 
-            sum + (log.sleep_quality || 0), 0
-          ) / recentSleepLogs.length;
+          analysis.average_sleep_quality =
+            recentSleepLogs.reduce(
+              (sum, log) => sum + (log.sleep_quality || 0),
+              0,
+            ) / recentSleepLogs.length;
 
           // สร้างคำแนะนำ
           if (analysis.total_sleep_hours < 7) {
@@ -185,14 +234,23 @@ export class AIController {
             analysis.recommendations.push('ควรปรับปรุงคุณภาพการนอน');
           }
 
-          analysis.insights.push(`นอนเฉลี่ย ${analysis.total_sleep_hours.toFixed(1)} ชั่วโมงต่อคืน`);
-          analysis.insights.push(`คุณภาพการนอนเฉลี่ย ${analysis.average_sleep_quality.toFixed(1)}/10`);
+          analysis.insights.push(
+            `นอนเฉลี่ย ${analysis.total_sleep_hours.toFixed(1)} ชั่วโมงต่อคืน`,
+          );
+          analysis.insights.push(
+            `คุณภาพการนอนเฉลี่ย ${analysis.average_sleep_quality.toFixed(1)}/10`,
+          );
         }
       }
 
-      return ResponseDto.success(analysis, 'Sleep analysis completed successfully');
+      return ResponseDto.success(
+        analysis,
+        'Sleep analysis completed successfully',
+      );
     } catch (error) {
-      return ResponseDto.error(`Failed to analyze sleep data: ${error.message}`);
+      return ResponseDto.error(
+        `Failed to analyze sleep data: ${error.message}`,
+      );
     }
   }
 
@@ -206,12 +264,15 @@ export class AIController {
         return ResponseDto.error('Unauthorized access to goals progress');
       }
 
-      const healthGoals = await this.supabaseService.getHealthGoalsByUserId(parseInt(userId));
-      
-      const progress = healthGoals.map(goal => {
-        const progressPercentage = goal.target_value > 0 
-          ? Math.round((goal.current_value / goal.target_value) * 100)
-          : 0;
+      const healthGoals = await this.supabaseService.getHealthGoalsByUserId(
+        parseInt(userId),
+      );
+
+      const progress = healthGoals.map((goal) => {
+        const progressPercentage =
+          goal.target_value > 0
+            ? Math.round((goal.current_value / goal.target_value) * 100)
+            : 0;
 
         return {
           id: goal.id,
@@ -228,9 +289,14 @@ export class AIController {
         };
       });
 
-      return ResponseDto.success(progress, 'Goals progress retrieved successfully');
+      return ResponseDto.success(
+        progress,
+        'Goals progress retrieved successfully',
+      );
     } catch (error) {
-      return ResponseDto.error(`Failed to retrieve goals progress: ${error.message}`);
+      return ResponseDto.error(
+        `Failed to retrieve goals progress: ${error.message}`,
+      );
     }
   }
 
@@ -246,16 +312,18 @@ export class AIController {
       }
 
       const endDate = new Date();
-      const startDate = new Date(endDate.getTime() - days * 24 * 60 * 60 * 1000);
+      const startDate = new Date(
+        endDate.getTime() - days * 24 * 60 * 60 * 1000,
+      );
 
       const [foodLogs, exerciseLogs, sleepLogs, waterLogs] = await Promise.all([
-        this.supabaseService.getFoodLogs(parseInt(userId), { 
+        this.supabaseService.getFoodLogs(parseInt(userId), {
           date_from: startDate.toISOString().split('T')[0],
-          date_to: endDate.toISOString().split('T')[0]
+          date_to: endDate.toISOString().split('T')[0],
         }),
         this.supabaseService.getExerciseLogs(parseInt(userId), {
           exercise_date_from: startDate.toISOString().split('T')[0],
-          exercise_date_to: endDate.toISOString().split('T')[0]
+          exercise_date_to: endDate.toISOString().split('T')[0],
         }),
         this.supabaseService.getSleepLogsByUserId(parseInt(userId)),
         this.supabaseService.getWaterLogsByUserId(parseInt(userId)),
@@ -270,12 +338,19 @@ export class AIController {
         exercise_trend: this.analyzeExerciseTrend(exerciseLogs, days),
         sleep_trend: this.analyzeSleepTrend(sleepLogs, days),
         water_trend: this.analyzeWaterTrend(waterLogs, days),
-        overall_health_score: this.calculateOverallHealthScore(foodLogs, exerciseLogs, sleepLogs, waterLogs),
+        overall_health_score: this.calculateOverallHealthScore(
+          foodLogs,
+          exerciseLogs,
+          sleepLogs,
+          waterLogs,
+        ),
       };
 
       return ResponseDto.success(trends, 'Health trends analyzed successfully');
     } catch (error) {
-      return ResponseDto.error(`Failed to analyze health trends: ${error.message}`);
+      return ResponseDto.error(
+        `Failed to analyze health trends: ${error.message}`,
+      );
     }
   }
 
@@ -289,23 +364,29 @@ export class AIController {
   ): Promise<ResponseDto<any>> {
     try {
       // สร้างเซสชันแชทใหม่ (พร้อมหัวข้ออัตโนมัติถ้ามีข้อความเริ่มต้น)
-      const session = await this.chatService.createChatSession(userId, body.title, body.initial_message);
-      
+      const session = await this.chatService.createChatSession(
+        userId,
+        body.title,
+        body.initial_message,
+      );
+
       // ถ้ามีข้อความเริ่มต้น ให้ส่งข้อความทันที
       let response = { session };
-      
+
       if (body.initial_message) {
         const messageResult = await this.chatService.sendMessage(
           session.id,
           userId,
-          body.initial_message
+          body.initial_message,
         );
         response = { ...response, ...messageResult };
       }
-      
+
       return ResponseDto.success(response, 'Chat session started successfully');
     } catch (error) {
-      return ResponseDto.error(`Failed to start chat session: ${error.message}`);
+      return ResponseDto.error(
+        `Failed to start chat session: ${error.message}`,
+      );
     }
   }
 
@@ -332,10 +413,17 @@ export class AIController {
     @CurrentUser('id') userId: number,
   ): Promise<ResponseDto<any>> {
     try {
-      const messages = await this.chatService.getChatMessages(parseInt(sessionId));
-      return ResponseDto.success(messages, 'Chat history retrieved successfully');
+      const messages = await this.chatService.getChatMessages(
+        parseInt(sessionId),
+      );
+      return ResponseDto.success(
+        messages,
+        'Chat history retrieved successfully',
+      );
     } catch (error) {
-      return ResponseDto.error(`Failed to retrieve chat history: ${error.message}`);
+      return ResponseDto.error(
+        `Failed to retrieve chat history: ${error.message}`,
+      );
     }
   }
 
@@ -365,7 +453,8 @@ export class AIController {
   ): Promise<ResponseDto<any>> {
     try {
       const analysis = await this.aiService.analyzeUserHealth(userId);
-      const recommendations = await this.aiService.generateAIRecommendations(userId);
+      const recommendations =
+        await this.aiService.generateAIRecommendations(userId);
 
       const result = {
         health_analysis: analysis,
@@ -375,9 +464,14 @@ export class AIController {
         timestamp: new Date().toISOString(),
       };
 
-      return ResponseDto.success(result, 'Health data analysis completed successfully');
+      return ResponseDto.success(
+        result,
+        'Health data analysis completed successfully',
+      );
     } catch (error) {
-      return ResponseDto.error(`Failed to analyze health data: ${error.message}`);
+      return ResponseDto.error(
+        `Failed to analyze health data: ${error.message}`,
+      );
     }
   }
 
@@ -391,17 +485,25 @@ export class AIController {
         return ResponseDto.error('Unauthorized access to recommendations');
       }
 
-      const recommendations = await this.aiService.generateAIRecommendations(parseInt(userId));
-      return ResponseDto.success(recommendations, 'AI recommendations retrieved successfully');
+      const recommendations = await this.aiService.generateAIRecommendations(
+        parseInt(userId),
+      );
+      return ResponseDto.success(
+        recommendations,
+        'AI recommendations retrieved successfully',
+      );
     } catch (error) {
-      return ResponseDto.error(`Failed to retrieve AI recommendations: ${error.message}`);
+      return ResponseDto.error(
+        `Failed to retrieve AI recommendations: ${error.message}`,
+      );
     }
   }
 
   @Post('insights/save')
   @HttpCode(HttpStatus.CREATED)
   async saveAIInsight(
-    @Body() insightData: {
+    @Body()
+    insightData: {
       type: string;
       title: string;
       description: string;
@@ -422,11 +524,12 @@ export class AIController {
   // ==================== PRIVATE HELPER METHODS ====================
 
   private analyzeNutritionTrend(foodLogs: any[], days: number): any {
-    if (foodLogs.length === 0) return { trend: 'no_data', message: 'No nutrition data available' };
+    if (foodLogs.length === 0)
+      return { trend: 'no_data', message: 'No nutrition data available' };
 
     const dailyCalories = this.groupByDate(foodLogs, 'consumed_at', 'calories');
     const avgCalories = this.calculateAverage(dailyCalories);
-    
+
     return {
       trend: this.determineTrend(dailyCalories),
       average_calories: avgCalories,
@@ -436,11 +539,16 @@ export class AIController {
   }
 
   private analyzeExerciseTrend(exerciseLogs: any[], days: number): any {
-    if (exerciseLogs.length === 0) return { trend: 'no_data', message: 'No exercise data available' };
+    if (exerciseLogs.length === 0)
+      return { trend: 'no_data', message: 'No exercise data available' };
 
-    const dailyDuration = this.groupByDate(exerciseLogs, 'exercise_date', 'duration_minutes');
+    const dailyDuration = this.groupByDate(
+      exerciseLogs,
+      'exercise_date',
+      'duration_minutes',
+    );
     const avgDuration = this.calculateAverage(dailyDuration);
-    
+
     return {
       trend: this.determineTrend(dailyDuration),
       average_duration: avgDuration,
@@ -450,11 +558,16 @@ export class AIController {
   }
 
   private analyzeSleepTrend(sleepLogs: any[], days: number): any {
-    if (sleepLogs.length === 0) return { trend: 'no_data', message: 'No sleep data available' };
+    if (sleepLogs.length === 0)
+      return { trend: 'no_data', message: 'No sleep data available' };
 
-    const dailySleep = this.groupByDate(sleepLogs, 'sleep_date', 'total_sleep_hours');
+    const dailySleep = this.groupByDate(
+      sleepLogs,
+      'sleep_date',
+      'total_sleep_hours',
+    );
     const avgSleep = this.calculateAverage(dailySleep);
-    
+
     return {
       trend: this.determineTrend(dailySleep),
       average_sleep_hours: avgSleep,
@@ -464,11 +577,12 @@ export class AIController {
   }
 
   private analyzeWaterTrend(waterLogs: any[], days: number): any {
-    if (waterLogs.length === 0) return { trend: 'no_data', message: 'No water intake data available' };
+    if (waterLogs.length === 0)
+      return { trend: 'no_data', message: 'No water intake data available' };
 
     const dailyWater = this.groupByDate(waterLogs, 'consumed_at', 'amount_ml');
     const avgWater = this.calculateAverage(dailyWater);
-    
+
     return {
       trend: this.determineTrend(dailyWater),
       average_water_ml: avgWater,
@@ -477,7 +591,12 @@ export class AIController {
     };
   }
 
-  private calculateOverallHealthScore(foodLogs: any[], exerciseLogs: any[], sleepLogs: any[], waterLogs: any[]): number {
+  private calculateOverallHealthScore(
+    foodLogs: any[],
+    exerciseLogs: any[],
+    sleepLogs: any[],
+    waterLogs: any[],
+  ): number {
     let score = 0;
     let factors = 0;
 
@@ -501,10 +620,14 @@ export class AIController {
     return factors > 0 ? Math.round(score / factors) : 0;
   }
 
-  private groupByDate(logs: any[], dateField: string, valueField: string): number[] {
+  private groupByDate(
+    logs: any[],
+    dateField: string,
+    valueField: string,
+  ): number[] {
     const dailyValues: { [key: string]: number } = {};
-    
-    logs.forEach(log => {
+
+    logs.forEach((log) => {
       const date = log[dateField]?.split('T')[0] || log[dateField];
       if (date && log[valueField]) {
         if (!dailyValues[date]) {
@@ -524,15 +647,15 @@ export class AIController {
 
   private determineTrend(values: number[]): string {
     if (values.length < 2) return 'stable';
-    
+
     const firstHalf = values.slice(0, Math.ceil(values.length / 2));
     const secondHalf = values.slice(Math.ceil(values.length / 2));
-    
+
     const firstAvg = this.calculateAverage(firstHalf);
     const secondAvg = this.calculateAverage(secondHalf);
-    
+
     const change = ((secondAvg - firstAvg) / firstAvg) * 100;
-    
+
     if (change > 10) return 'improving';
     if (change < -10) return 'declining';
     return 'stable';

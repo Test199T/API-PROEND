@@ -533,8 +533,7 @@ export class DashboardController {
     const userId = req.user.id;
 
     try {
-      const preferences =
-        await this.supabaseService.getUserPreference(userId);
+      const preferences = await this.supabaseService.getUserPreference(userId);
       return {
         success: true,
         data: preferences,

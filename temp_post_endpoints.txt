@@ -1,0 +1,44 @@
+
+  // POST /users/profile - Create new profile (main endpoint)
+  @Post('users/profile')
+  @UseGuards(AuthGuard)
+  async createUserProfile(
+    @Request() req: any,
+    @Body() profileData: ProfileUpdateDto,
+  ): Promise<ApiResponse<any>> {
+    try {
+      const userId = req.user.id as string;
+      console.log('Creating profile for user:', userId);
+      console.log('Profile data:', profileData);
+
+      const newProfile = await this.profileService.createUserProfile(
+        userId,
+        profileData,
+      );
+
+      return {
+        data: newProfile,
+        message: 'Profile created successfully',
+      };
+    } catch (error: any) {
+      console.error('Profile creation error:', error);
+      throw new HttpException(
+        'Failed to create profile',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // POST /user/profile - Alternative endpoint (without 's')
+  @Post('user/profile')
+  @UseGuards(AuthGuard)
+  async createUserProfileAlt(@Request() req: any, @Body() profileData: any) {
+    return this.createUserProfile(req, profileData as ProfileUpdateDto);
+  }
+
+  // POST /profile - Short endpoint
+  @Post('profile')
+  @UseGuards(AuthGuard)
+  async createProfileShort(@Request() req: any, @Body() profileData: any) {
+    return this.createUserProfile(req, profileData as ProfileUpdateDto);
+  }

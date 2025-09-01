@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
 import { AuthModule } from './auth/auth.module';
+import { ProfileModule } from './profile/profile.module';
 import { SupabaseService } from './services/supabase.service';
 import { AIService } from './services/ai.service';
 import { DashboardService } from './services/dashboard.service';
@@ -34,6 +35,7 @@ import { HealthController } from './controllers/health.controller';
     }),
 
     AuthModule,
+    ProfileModule,
   ],
   controllers: [
     DashboardController,

@@ -24,6 +24,4 @@ export class WaterLogService {
   async deleteWaterLog(id: string, userId: number) {
     return await this.supabaseService.deleteWaterLog(id, userId);
   }
-
-
 }

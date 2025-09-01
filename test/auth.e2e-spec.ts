@@ -28,7 +28,7 @@ describe('Authentication (e2e)', () => {
           email: testEmail,
           password: 'password123',
           firstName: 'ทดสอบ',
-          lastName: 'ผู้ใช้'
+          lastName: 'ผู้ใช้',
         })
         .expect(201)
         .expect((res) => {
@@ -44,7 +44,7 @@ describe('Authentication (e2e)', () => {
           email: 'invalid-email',
           password: 'password123',
           firstName: 'ทดสอบ',
-          lastName: 'ผู้ใช้'
+          lastName: 'ผู้ใช้',
         })
         .expect(400);
     });
@@ -54,7 +54,7 @@ describe('Authentication (e2e)', () => {
         .post('/auth/register')
         .send({
           email: 'test@example.com',
-          password: 'password123'
+          password: 'password123',
           // missing firstName and lastName
         })
         .expect(400);
@@ -68,16 +68,14 @@ describe('Authentication (e2e)', () => {
     beforeEach(async () => {
       testEmail = `test${Date.now()}@example.com`;
       testPassword = 'password123';
-      
+
       // Register a user first
-      await request(app.getHttpServer())
-        .post('/auth/register')
-        .send({
-          email: testEmail,
-          password: testPassword,
-          firstName: 'ทดสอบ',
-          lastName: 'ผู้ใช้'
-        });
+      await request(app.getHttpServer()).post('/auth/register').send({
+        email: testEmail,
+        password: testPassword,
+        firstName: 'ทดสอบ',
+        lastName: 'ผู้ใช้',
+      });
     });
 
     it('should login existing user', () => {
@@ -85,7 +83,7 @@ describe('Authentication (e2e)', () => {
         .post('/auth/login')
         .send({
           email: testEmail,
-          password: testPassword
+          password: testPassword,
         })
         .expect(200)
         .expect((res) => {
@@ -100,7 +98,7 @@ describe('Authentication (e2e)', () => {
         .post('/auth/login')
         .send({
           email: testEmail,
-          password: 'wrongpassword'
+          password: 'wrongpassword',
         })
         .expect(401);
     });
@@ -110,7 +108,7 @@ describe('Authentication (e2e)', () => {
         .post('/auth/login')
         .send({
           email: 'nonexistent@example.com',
-          password: 'password123'
+          password: 'password123',
         })
         .expect(401);
     });

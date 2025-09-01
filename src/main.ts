@@ -12,7 +12,12 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
   // Enable CORS
-  app.enableCors();
+  app.enableCors({
+    origin: ['http://localhost:8080', 'http://localhost:5173'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Origin', 'Content-Type', 'Accept', 'Authorization'],
+    credentials: true,
+  });
 
   // Enable validation pipe
   app.useGlobalPipes(
@@ -34,9 +39,13 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
-  
+
   logger.log(`Application is running on: http://localhost:${port}`);
   logger.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   logger.log(`Auth endpoints available at: http://localhost:${port}/auth`);
 }
-bootstrap();
+bootstrap().catch((error) => {
+  const logger = new Logger('Bootstrap');
+  logger.error('Error starting application:', error);
+  process.exit(1);
+});

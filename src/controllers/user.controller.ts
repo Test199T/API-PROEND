@@ -67,12 +67,47 @@ export class UserController {
 
   @Get('profile')
   @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'ดูโปรไฟล์ของฉัน',
+    description:
+      'ดึงข้อมูลโปรไฟล์ผู้ใช้ที่ล็อกอินอยู่ (รวมข้อมูลสุขภาพแบบครบถ้วน)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'ดึงโปรไฟล์สำเร็จ',
+    type: UserProfileDto,
+  })
   async getMyProfile(
     @User('id') userId: number,
   ): Promise<ResponseDto<UserProfileDto>> {
     try {
       const profile = await this.userService.getUserProfile(userId);
       return ResponseDto.success(profile, 'ดึงโปรไฟล์สำเร็จ');
+    } catch (error) {
+      return ResponseDto.error(error.message);
+    }
+  }
+
+  @Get('profile/complete')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'ดูโปรไฟล์แบบสมบูรณ์',
+    description:
+      'ดึงข้อมูลโปรไฟล์ผู้ใช้ครบถ้วน (ข้อมูลส่วนตัว, สุขภาพ, เป้าหมาย, โภชนาการ, พฤติกรรม, ประวัติ)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'ดึงโปรไฟล์สมบูรณ์สำเร็จ',
+    type: UserProfileDto,
+  })
+  async getMyCompleteProfile(
+    @User('id') userId: number,
+  ): Promise<ResponseDto<UserProfileDto>> {
+    try {
+      const profile = await this.userService.getCompleteUserProfile(userId);
+      return ResponseDto.success(profile, 'ดึงโปรไฟล์สมบูรณ์สำเร็จ');
     } catch (error) {
       return ResponseDto.error(error.message);
     }

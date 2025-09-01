@@ -1,0 +1,252 @@
+# VITA WISE AI - Profile API Testing
+# ทดสอบ API สำหรับระบบ Profile ครบถ้วน
+
+### 1. สร้างผู้ใช้ใหม่ (Register) พร้อมข้อมูลครบถ้วน
+POST http://localhost:3000/users/register
+Content-Type: application/json
+
+{
+  "username": "testuser01",
+  "email": "testuser01@example.com",
+  "password": "password123",
+  "first_name": "นายทดสอบ",
+  "last_name": "ระบบ",
+  "date_of_birth": "1990-05-15",
+  "gender": "male",
+  "height_cm": 175,
+  "weight_kg": 70,
+  "activity_level": "moderately_active",
+  "health_data": {
+    "waist_circumference_cm": 80,
+    "blood_pressure_systolic": 120,
+    "blood_pressure_diastolic": 80,
+    "blood_sugar_mg_dl": 90
+  },
+  "health_goals": {
+    "main_goal": "ลดน้ำหนัก",
+    "goal_duration": "3 เดือน",
+    "motivation": "เพื่อสุขภาพที่ดีขึ้น",
+    "target_weight_kg": 65,
+    "target_sleep_hours": 8,
+    "target_exercise_minutes_per_day": 60
+  },
+  "nutrition_goals": {
+    "target_calories_per_day": 1800,
+    "target_protein_grams_per_day": 100,
+    "target_carbs_grams_per_day": 200,
+    "target_fat_grams_per_day": 60,
+    "target_fiber_grams_per_day": 25,
+    "target_sodium_mg_per_day": 2300,
+    "dietary_restrictions": ["ไม่กินหมู", "ลดน้ำตาล"]
+  },
+  "daily_behavior": {
+    "exercise_frequency_per_week": 5,
+    "average_sleep_hours_per_day": 7,
+    "meals_per_day": 3,
+    "alcohol_consumption": "occasionally",
+    "smoking_status": "never",
+    "daily_water_goal_ml": 2500
+  },
+  "medical_history": {
+    "chronic_conditions": [],
+    "surgery_history": [],
+    "allergies": ["ไข่", "ถั่วลิสง"],
+    "medications": [],
+    "family_medical_history": "พ่อแม่เป็นเบาหวาน"
+  }
+}
+
+### 2. ดูโปรไฟล์พื้นฐาน
+GET http://localhost:3000/users/profile
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjE1LCJlbWFpbCI6ImpvaG5kb2UxMjNAZ21haWwuY29tIiwidXNlcm5hbWUiOiJqb2huZG9lMTIzIiwiaWF0IjoxNzU2Njc2MjE4LCJleHAiOjE3NTY3NjI2MTh9.JV-DtJ9Q8XnnEyer5UwQI03SbEbjgD4-uVh3PS2pB_s
+
+### 3. ดูโปรไฟล์แบบครบถ้วน
+GET http://localhost:3000/users/profile/complete
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjE1LCJlbWFpbCI6ImpvaG5kb2UxMjNAZ21haWwuY29tIiwidXNlcm5hbWUiOiJqb2huZG9lMTIzIiwiaWF0IjoxNzU2Njc2MjE4LCJleHAiOjE3NTY3NjI2MTh9.JV-DtJ9Q8XnnEyer5UwQI03SbEbjgD4-uVh3PS2pB_s
+
+### 4. อัปเดตโปรไฟล์ (ข้อมูลส่วนตัว)
+PUT http://localhost:3000/users/profile
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjE1LCJlbWFpbCI6ImpvaG5kb2UxMjNAZ21haWwuY29tIiwidXNlcm5hbWUiOiJqb2huZG9lMTIzIiwiaWF0IjoxNzU2Njc2MjE4LCJleHAiOjE3NTY3NjI2MTh9.JV-DtJ9Q8XnnEyer5UwQI03SbEbjgD4-uVh3PS2pB_s
+Content-Type: application/json
+
+{
+  "first_name": "นายทดสอบ แก้ไข",
+  "last_name": "ระบบใหม่",
+  "weight_kg": 68,
+  "height_cm": 175
+}
+
+### 5. อัปเดตข้อมูลสุขภาพ
+PUT http://localhost:3000/users/profile
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjE1LCJlbWFpbCI6ImpvaG5kb2UxMjNAZ21haWwuY29tIiwidXNlcm5hbWUiOiJqb2huZG9lMTIzIiwiaWF0IjoxNzU2Njc2MjE4LCJleHAiOjE3NTY3NjI2MTh9.JV-DtJ9Q8XnnEyer5UwQI03SbEbjgD4-uVh3PS2pB_s
+Content-Type: application/json
+
+{
+  "health_data": {
+    "waist_circumference_cm": 78,
+    "blood_pressure_systolic": 118,
+    "blood_pressure_diastolic": 78,
+    "blood_sugar_mg_dl": 88
+  }
+}
+
+### 6. อัปเดตเป้าหมายสุขภาพ
+PUT http://localhost:3000/users/profile
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjE1LCJlbWFpbCI6ImpvaG5kb2UxMjNAZ21haWwuY29tIiwidXNlcm5hbWUiOiJqb2huZG9lMTIzIiwiaWF0IjoxNzU2Njc2MjE4LCJleHAiOjE3NTY3NjI2MTh9.JV-DtJ9Q8XnnEyer5UwQI03SbEbjgD4-uVh3PS2pB_s
+Content-Type: application/json
+
+{
+  "health_goals": {
+    "main_goal": "เพิ่มกล้ามเนื้อ",
+    "goal_duration": "6 เดือน",
+    "motivation": "เพื่อความแข็งแรง",
+    "target_weight_kg": 72,
+    "target_sleep_hours": 8,
+    "target_exercise_minutes_per_day": 90
+  }
+}
+
+### 7. อัปเดตเป้าหมายโภชนาการ
+PUT http://localhost:3000/users/profile
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjE1LCJlbWFpbCI6ImpvaG5kb2UxMjNAZ21haWwuY29tIiwidXNlcm5hbWUiOiJqb2huZG9lMTIzIiwiaWF0IjoxNzU2Njc2MjE4LCJleHAiOjE3NTY3NjI2MTh9.JV-DtJ9Q8XnnEyer5UwQI03SbEbjgD4-uVh3PS2pB_s
+Content-Type: application/json
+
+{
+  "nutrition_goals": {
+    "target_calories_per_day": 2200,
+    "target_protein_grams_per_day": 140,
+    "target_carbs_grams_per_day": 250,
+    "target_fat_grams_per_day": 80,
+    "target_fiber_grams_per_day": 30,
+    "target_sodium_mg_per_day": 2000,
+    "dietary_restrictions": ["ไม่กินหมู", "ลดน้ำตาล", "เพิ่มโปรตีน"]
+  }
+}
+
+### 8. อัปเดตพฤติกรรมประจำวัน
+PUT http://localhost:3000/users/profile
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjE1LCJlbWFpbCI6ImpvaG5kb2UxMjNAZ21haWwuY29tIiwidXNlcm5hbWUiOiJqb2huZG9lMTIzIiwiaWF0IjoxNzU2Njc2MjE4LCJleHAiOjE3NTY3NjI2MTh9.JV-DtJ9Q8XnnEyer5UwQI03SbEbjgD4-uVh3PS2pB_s
+Content-Type: application/json
+
+{
+  "daily_behavior": {
+    "exercise_frequency_per_week": 6,
+    "average_sleep_hours_per_day": 8,
+    "meals_per_day": 4,
+    "alcohol_consumption": "never",
+    "smoking_status": "never",
+    "daily_water_goal_ml": 3000
+  }
+}
+
+### 9. อัปเดตประวัติสุขภาพ
+PUT http://localhost:3000/users/profile
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjE1LCJlbWFpbCI6ImpvaG5kb2UxMjNAZ21haWwuY29tIiwidXNlcm5hbWUiOiJqb2huZG9lMTIzIiwiaWF0IjoxNzU2Njc2MjE4LCJleHAiOjE3NTY3NjI2MTh9.JV-DtJ9Q8XnnEyer5UwQI03SbEbjgD4-uVh3PS2pB_s
+Content-Type: application/json
+
+{
+  "medical_history": {
+    "chronic_conditions": [],
+    "surgery_history": ["ผ่าตัดไส้ติ่ง 2020"],
+    "allergies": ["ไข่", "ถั่วลิสง", "นม"],
+    "medications": ["วิตามิน D"],
+    "family_medical_history": "พ่อแม่เป็นเบาหวาน, ปู่ย่าเป็นความดันโลหิตสูง"
+  }
+}
+
+### 10. สร้างผู้ใช้ที่ 2 เพื่อทดสอบข้อมูลหลากหลาย
+POST http://localhost:3000/users/register
+Content-Type: application/json
+
+{
+  "username": "jane_doe",
+  "email": "jane.doe@example.com",
+  "password": "securepass456",
+  "first_name": "นางสาวเจน",
+  "last_name": "โด",
+  "date_of_birth": "1988-12-20",
+  "gender": "female",
+  "height_cm": 165,
+  "weight_kg": 55,
+  "activity_level": "very_active",
+  "health_data": {
+    "waist_circumference_cm": 65,
+    "blood_pressure_systolic": 110,
+    "blood_pressure_diastolic": 70,
+    "blood_sugar_mg_dl": 85
+  },
+  "health_goals": {
+    "main_goal": "รักษาสุขภาพ",
+    "goal_duration": "ตลอดชีวิต",
+    "motivation": "เพื่อชีวิตที่มีคุณภาพ",
+    "target_weight_kg": 55,
+    "target_sleep_hours": 7,
+    "target_exercise_minutes_per_day": 45
+  },
+  "nutrition_goals": {
+    "target_calories_per_day": 1600,
+    "target_protein_grams_per_day": 80,
+    "target_carbs_grams_per_day": 180,
+    "target_fat_grams_per_day": 55,
+    "target_fiber_grams_per_day": 28,
+    "target_sodium_mg_per_day": 1800,
+    "dietary_restrictions": ["เจ", "ไม่กินเนื้อแดง"]
+  },
+  "daily_behavior": {
+    "exercise_frequency_per_week": 4,
+    "average_sleep_hours_per_day": 7.5,
+    "meals_per_day": 5,
+    "alcohol_consumption": "never",
+    "smoking_status": "never",
+    "daily_water_goal_ml": 2000
+  },
+  "medical_history": {
+    "chronic_conditions": [],
+    "surgery_history": [],
+    "allergies": [],
+    "medications": ["วิตามิน C", "แคลเซียม"],
+    "family_medical_history": "ครอบครัวมีประวัติมะเร็งเต้านม"
+  }
+}
+
+### 11. ตรวจสอบว่าชื่อผู้ใช้ซ้ำหรือไม่
+GET http://localhost:3000/users/check-username/testuser01
+
+### 12. ตรวจสอบว่าอีเมลซ้ำหรือไม่
+GET http://localhost:3000/users/check-email/testuser01@example.com
+
+### 13. ดึงข้อมูลแดชบอร์ด
+GET http://localhost:3000/users/dashboard
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjE1LCJlbWFpbCI6ImpvaG5kb2UxMjNAZ21haWwuY29tIiwidXNlcm5hbWUiOiJqb2huZG9lMTIzIiwiaWF0IjoxNzU2Njc2MjE4LCJleHAiOjE3NTY3NjI2MTh9.JV-DtJ9Q8XnnEyer5UwQI03SbEbjgD4-uVh3PS2pB_s
+
+### 14. ทดสอบการอัปเดตแบบบางส่วน (Partial Update)
+PUT http://localhost:3000/users/profile
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjE1LCJlbWFpbCI6ImpvaG5kb2UxMjNAZ21haWwuY29tIiwidXNlcm5hbWUiOiJqb2huZG9lMTIzIiwiaWF0IjoxNzU2Njc2MjE4LCJleHAiOjE3NTY3NjI2MTh9.JV-DtJ9Q8XnnEyer5UwQI03SbEbjgD4-uVh3PS2pB_s
+Content-Type: application/json
+
+{
+  "weight_kg": 69,
+  "health_data": {
+    "blood_pressure_systolic": 125
+  }
+}
+
+### 15. ทดสอบข้อมูลไม่ถูกต้อง (Validation Error)
+PUT http://localhost:3000/users/profile
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjE1LCJlbWFpbCI6ImpvaG5kb2UxMjNAZ21haWwuY29tIiwidXNlcm5hbWUiOiJqb2huZG9lMTIzIiwiaWF0IjoxNzU2Njc2MjE4LCJleHAiOjE3NTY3NjI2MTh9.JV-DtJ9Q8XnnEyer5UwQI03SbEbjgD4-uVh3PS2pB_s
+Content-Type: application/json
+
+{
+  "height_cm": 300,
+  "weight_kg": -10,
+  "nutrition_goals": {
+    "target_calories_per_day": 10000
+  }
+}
+
+# คำแนะนำการใช้งาน:
+# 1. เปลี่ยน YOUR_JWT_TOKEN_HERE เป็น token ที่ได้จากการ login
+# 2. รัน server ที่ port 3000
+# 3. ทดสอบทีละ request ตามลำดับ
+# 4. ตรวจสอบ response ที่ได้
+# 5. ใช้ data ที่ได้จาก request แรก สำหรับ request ถัดไป

@@ -14,7 +14,8 @@ export class AuthGuard implements CanActivate {
   private readonly jwtSecret: string;
 
   constructor(private configService: ConfigService) {
-    this.jwtSecret = this.configService.get<string>('JWT_SECRET') || 'your-secret-key';
+    this.jwtSecret =
+      this.configService.get<string>('JWT_SECRET') || 'your-secret-key';
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -30,14 +31,14 @@ export class AuthGuard implements CanActivate {
     try {
       // Verify JWT token
       const decoded = jwt.verify(token, this.jwtSecret) as any;
-      
+
       // Attach user info to request
       request.user = {
         id: decoded.sub,
         email: decoded.email,
         username: decoded.username,
       };
-      
+
       this.logger.debug(`Token verified for user: ${decoded.email}`);
       return true;
     } catch (error) {

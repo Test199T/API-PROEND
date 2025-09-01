@@ -206,6 +206,42 @@ export class UserService {
     return this.mapToUserProfileDto(user);
   }
 
+  async getCompleteUserProfile(id: number): Promise<UserProfileDto> {
+    const user = await this.supabaseService.getUserById(id);
+
+    if (!user) {
+      throw new NotFoundException('ไม่พบผู้ใช้นี้');
+    }
+
+    // ดึงข้อมูลเพิ่มเติมแบบ parallel
+    const [
+      healthGoals,
+      recentFoodLogs,
+      recentExerciseLogs,
+      recentSleepLogs,
+      recentWaterLogs,
+      healthMetrics,
+    ] = await Promise.all([
+      this.supabaseService.getHealthGoalsByUserId(id).catch(() => []),
+      this.supabaseService.getFoodLogsByUserId(id).catch(() => []),
+      this.supabaseService.getExerciseLogsByUserId(id).catch(() => []),
+      this.supabaseService.getSleepLogsByUserId(id).catch(() => []),
+      this.supabaseService.getWaterLogsByUserId(id).catch(() => []),
+      this.supabaseService.getHealthMetricsByUserId(id).catch(() => []),
+    ]);
+
+    // ดึงเฉพาะข้อมูลล่าสุด
+    const profile = this.mapToUserProfileDto(user);
+    profile.healthGoals = healthGoals.slice(0, 5);
+    profile.recentFoodLogs = recentFoodLogs.slice(0, 10);
+    profile.recentExerciseLogs = recentExerciseLogs.slice(0, 10);
+    profile.recentSleepLogs = recentSleepLogs.slice(0, 7);
+    profile.recentWaterLogs = recentWaterLogs.slice(0, 10);
+    profile.healthMetrics = healthMetrics.slice(0, 10);
+
+    return profile;
+  }
+
   async getUserDashboard(id: number): Promise<UserDashboardDto> {
     const user = await this.getUserProfile(id);
 
@@ -282,6 +318,12 @@ export class UserService {
       age: user.age || undefined,
       bmi: user.bmi || undefined,
       fullName: user.fullName,
+      // เพิ่มข้อมูลใหม่
+      health_data: user.health_data,
+      health_goals: user.health_goals,
+      nutrition_goals: user.nutrition_goals,
+      daily_behavior: user.daily_behavior,
+      medical_history: user.medical_history,
     };
   }
 

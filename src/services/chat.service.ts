@@ -14,7 +14,10 @@ export class ChatService {
   /**
    * สร้างหัวข้อเซสชันแชทอัตโนมัติด้วย AI
    */
-  private async generateAutomaticTitle(userMessage: string, userData?: any): Promise<string> {
+  private async generateAutomaticTitle(
+    userMessage: string,
+    userData?: any,
+  ): Promise<string> {
     try {
       const prompt = `คุณเป็นผู้ช่วยด้านสุขภาพที่เก่งในการสรุปหัวข้อการสนทนา
 
@@ -35,7 +38,7 @@ export class ChatService {
 หัวข้อที่เหมาะสม:`;
 
       const title = await this.openRouterService.generateText(prompt, 0.3, 50);
-      
+
       // ทำความสะอาดข้อความที่ได้จาก AI
       const cleanTitle = title
         .replace(/["""]/g, '') // ลบเครื่องหมายคำพูด
@@ -55,24 +58,45 @@ export class ChatService {
    */
   private generateFallbackTitle(userMessage: string): string {
     const message = userMessage.toLowerCase();
-    
+
     // ตรวจสอบคำสำคัญในข้อความ
-    if (message.includes('อาหาร') || message.includes('กิน') || message.includes('โภชนาการ') || message.includes('แคลอรี่')) {
+    if (
+      message.includes('อาหาร') ||
+      message.includes('กิน') ||
+      message.includes('โภชนาการ') ||
+      message.includes('แคลอรี่')
+    ) {
       return 'ปรึกษาปัญหาด้านโภชนาการ';
     }
-    if (message.includes('ออกกำลังกาย') || message.includes('ฟิตเนส') || message.includes('กีฬา')) {
+    if (
+      message.includes('ออกกำลังกาย') ||
+      message.includes('ฟิตเนส') ||
+      message.includes('กีฬา')
+    ) {
       return 'คำแนะนำการออกกำลังกาย';
     }
-    if (message.includes('นอน') || message.includes('พักผ่อน') || message.includes('นอนไม่หลับ')) {
+    if (
+      message.includes('นอน') ||
+      message.includes('พักผ่อน') ||
+      message.includes('นอนไม่หลับ')
+    ) {
       return 'ปรึกษาปัญหาการนอน';
     }
-    if (message.includes('น้ำหนัก') || message.includes('ลดน้ำหนัก') || message.includes('เพิ่มน้ำหนัก')) {
+    if (
+      message.includes('น้ำหนัก') ||
+      message.includes('ลดน้ำหนัก') ||
+      message.includes('เพิ่มน้ำหนัก')
+    ) {
       return 'ติดตามน้ำหนักและสุขภาพ';
     }
-    if (message.includes('สุขภาพ') || message.includes('ตรวจ') || message.includes('อาการ')) {
+    if (
+      message.includes('สุขภาพ') ||
+      message.includes('ตรวจ') ||
+      message.includes('อาการ')
+    ) {
       return 'ปรึกษาปัญหาสุขภาพทั่วไป';
     }
-    
+
     return `แชทสุขภาพ ${new Date().toLocaleDateString('th-TH')}`;
   }
 
@@ -85,11 +109,14 @@ export class ChatService {
         session_title: newTitle,
         updated_at: new Date().toISOString(),
       });
-      
+
       this.logger.log(`Session ${sessionId} title updated to: ${newTitle}`);
       return result;
     } catch (error) {
-      this.logger.error(`Failed to update session title for ${sessionId}`, error);
+      this.logger.error(
+        `Failed to update session title for ${sessionId}`,
+        error,
+      );
       throw error;
     }
   }
@@ -97,14 +124,21 @@ export class ChatService {
   /**
    * สร้างเซสชันแชทใหม่
    */
-  async createChatSession(userId: number, sessionTitle?: string, initialMessage?: string): Promise<any> {
+  async createChatSession(
+    userId: number,
+    sessionTitle?: string,
+    initialMessage?: string,
+  ): Promise<any> {
     try {
       let finalTitle = sessionTitle;
-      
+
       // ถ้าไม่มีหัวข้อและมีข้อความเริ่มต้น ให้สร้างหัวข้ออัตโนมัติ
       if (!finalTitle && initialMessage) {
         const userData = await this.supabaseService.getUserById(userId);
-        finalTitle = await this.generateAutomaticTitle(initialMessage, userData);
+        finalTitle = await this.generateAutomaticTitle(
+          initialMessage,
+          userData,
+        );
       } else if (!finalTitle) {
         finalTitle = `แชทสุขภาพ ${new Date().toLocaleDateString('th-TH')}`;
       }
@@ -119,11 +153,16 @@ export class ChatService {
       };
 
       const result = await this.supabaseService.createChatSession(session);
-      this.logger.log(`Chat session created for user ${userId}: ${result.id} with title: ${finalTitle}`);
-      
+      this.logger.log(
+        `Chat session created for user ${userId}: ${result.id} with title: ${finalTitle}`,
+      );
+
       return result;
     } catch (error) {
-      this.logger.error(`Failed to create chat session for user ${userId}`, error);
+      this.logger.error(
+        `Failed to create chat session for user ${userId}`,
+        error,
+      );
       throw error;
     }
   }
@@ -135,7 +174,10 @@ export class ChatService {
     try {
       return await this.supabaseService.getChatSessionsByUserId(userId);
     } catch (error) {
-      this.logger.error(`Failed to get chat sessions for user ${userId}`, error);
+      this.logger.error(
+        `Failed to get chat sessions for user ${userId}`,
+        error,
+      );
       throw error;
     }
   }
@@ -147,7 +189,10 @@ export class ChatService {
     try {
       return await this.supabaseService.getChatMessagesBySessionId(sessionId);
     } catch (error) {
-      this.logger.error(`Failed to get chat messages for session ${sessionId}`, error);
+      this.logger.error(
+        `Failed to get chat messages for session ${sessionId}`,
+        error,
+      );
       throw error;
     }
   }
@@ -155,7 +200,11 @@ export class ChatService {
   /**
    * ส่งข้อความและรับการตอบกลับจาก AI
    */
-  async sendMessage(sessionId: number, userId: number, messageText: string): Promise<any> {
+  async sendMessage(
+    sessionId: number,
+    userId: number,
+    messageText: string,
+  ): Promise<any> {
     try {
       // บันทึกข้อความของผู้ใช้
       const userMessage = {
@@ -167,7 +216,8 @@ export class ChatService {
         message_type: 'text',
       };
 
-      const savedUserMessage = await this.supabaseService.createChatMessage(userMessage);
+      const savedUserMessage =
+        await this.supabaseService.createChatMessage(userMessage);
 
       // ดึงข้อมูลผู้ใช้และประวัติการแชท
       const [userData, chatHistory] = await Promise.all([
@@ -181,10 +231,12 @@ export class ChatService {
         aiResponse = await this.openRouterService.respondToChat(
           userData,
           messageText,
-          chatHistory
+          chatHistory,
         );
       } catch (aiError) {
-        this.logger.warn(`AI response failed, using fallback: ${aiError.message}`);
+        this.logger.warn(
+          `AI response failed, using fallback: ${aiError.message}`,
+        );
         aiResponse = this.getFallbackResponse(messageText);
       }
 
@@ -199,7 +251,8 @@ export class ChatService {
         ai_response_quality: 4, // Default quality score
       };
 
-      const savedAiMessage = await this.supabaseService.createChatMessage(aiMessage);
+      const savedAiMessage =
+        await this.supabaseService.createChatMessage(aiMessage);
 
       // อัพเดทเซสชัน
       await this.supabaseService.updateChatSession(sessionId, {
@@ -212,7 +265,10 @@ export class ChatService {
         sessionId,
       };
     } catch (error) {
-      this.logger.error(`Failed to send message in session ${sessionId}`, error);
+      this.logger.error(
+        `Failed to send message in session ${sessionId}`,
+        error,
+      );
       throw error;
     }
   }
@@ -220,7 +276,11 @@ export class ChatService {
   /**
    * ให้คะแนนการตอบกลับของ AI
    */
-  async rateAIResponse(messageId: number, rating: number, feedback?: string): Promise<any> {
+  async rateAIResponse(
+    messageId: number,
+    rating: number,
+    feedback?: string,
+  ): Promise<any> {
     try {
       const updateData: any = {
         ai_response_quality: rating,
@@ -230,12 +290,20 @@ export class ChatService {
         updateData.user_feedback = feedback;
       }
 
-      const result = await this.supabaseService.updateChatMessage(messageId, updateData);
-      this.logger.log(`AI response rated: message ${messageId}, rating ${rating}`);
-      
+      const result = await this.supabaseService.updateChatMessage(
+        messageId,
+        updateData,
+      );
+      this.logger.log(
+        `AI response rated: message ${messageId}, rating ${rating}`,
+      );
+
       return result;
     } catch (error) {
-      this.logger.error(`Failed to rate AI response for message ${messageId}`, error);
+      this.logger.error(
+        `Failed to rate AI response for message ${messageId}`,
+        error,
+      );
       throw error;
     }
   }
@@ -249,7 +317,7 @@ export class ChatService {
         is_active: false,
         updated_at: new Date().toISOString(),
       });
-      
+
       this.logger.log(`Chat session ${sessionId} closed`);
       return result;
     } catch (error) {
@@ -265,10 +333,10 @@ export class ChatService {
     try {
       // ลบข้อความทั้งหมดในเซสชันก่อน
       await this.supabaseService.deleteChatMessagesBySessionId(sessionId);
-      
+
       // ลบเซสชัน
       const result = await this.supabaseService.deleteChatSession(sessionId);
-      
+
       this.logger.log(`Chat session ${sessionId} deleted`);
       return result;
     } catch (error) {

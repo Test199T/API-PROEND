@@ -47,10 +47,12 @@ export class AIService {
         aiAnalysis = await this.openRouterService.analyzeHealthData(
           userData,
           healthData,
-          'การวิเคราะห์สุขภาพโดยรวม'
+          'การวิเคราะห์สุขภาพโดยรวม',
         );
       } catch (aiError) {
-        this.logger.warn(`AI analysis failed, using fallback: ${aiError.message}`);
+        this.logger.warn(
+          `AI analysis failed, using fallback: ${aiError.message}`,
+        );
         aiAnalysis = this.generateFallbackHealthAnalysis(userData, healthData);
       }
 
@@ -65,7 +67,10 @@ export class AIService {
         timestamp: new Date().toISOString(),
       };
     } catch (error) {
-      this.logger.error(`Failed to analyze user health for user ${userId}`, error);
+      this.logger.error(
+        `Failed to analyze user health for user ${userId}`,
+        error,
+      );
       throw error;
     }
   }
@@ -76,18 +81,25 @@ export class AIService {
   async generateAIRecommendations(userId: number): Promise<any> {
     try {
       const userData = await this.supabaseService.getUserById(userId);
-      const healthMetrics = await this.getHealthMetricsForRecommendations(userId);
+      const healthMetrics =
+        await this.getHealthMetricsForRecommendations(userId);
 
       // ใช้ OpenRouter AI สร้างคำแนะนำ
       let aiRecommendations: string;
       try {
-        aiRecommendations = await this.openRouterService.generateHealthRecommendations(
-          userData,
-          healthMetrics
-        );
+        aiRecommendations =
+          await this.openRouterService.generateHealthRecommendations(
+            userData,
+            healthMetrics,
+          );
       } catch (aiError) {
-        this.logger.warn(`AI recommendations failed, using fallback: ${aiError.message}`);
-        aiRecommendations = this.generateFallbackRecommendations(userData, healthMetrics);
+        this.logger.warn(
+          `AI recommendations failed, using fallback: ${aiError.message}`,
+        );
+        aiRecommendations = this.generateFallbackRecommendations(
+          userData,
+          healthMetrics,
+        );
       }
 
       return {
@@ -96,7 +108,10 @@ export class AIService {
         confidence: 0.85, // AI confidence score
       };
     } catch (error) {
-      this.logger.error(`Failed to generate AI recommendations for user ${userId}`, error);
+      this.logger.error(
+        `Failed to generate AI recommendations for user ${userId}`,
+        error,
+      );
       // Fallback to basic recommendations if AI fails
       return this.generateBasicRecommendations(userId);
     }
@@ -113,14 +128,17 @@ export class AIService {
         title: insightData.title || 'การวิเคราะห์สุขภาพจาก AI',
         description: insightData.description || insightData.analysis || '',
         confidence_score: insightData.confidence || 0.8,
-        data_sources: insightData.dataSources || ['health_logs', 'user_profile'],
+        data_sources: insightData.dataSources || [
+          'health_logs',
+          'user_profile',
+        ],
         actionable_items: insightData.actionableItems || [],
         created_at: new Date().toISOString(),
       };
 
       const result = await this.supabaseService.createAIInsight(insight);
       this.logger.log(`AI insight saved for user ${userId}: ${result.id}`);
-      
+
       return result;
     } catch (error) {
       this.logger.error(`Failed to save AI insight for user ${userId}`, error);
@@ -762,13 +780,14 @@ export class AIService {
    * ดึงข้อมูลสุขภาพสำหรับการวิเคราะห์
    */
   private async getHealthDataForAnalysis(userId: number): Promise<any> {
-    const [foodLogs, exerciseLogs, sleepLogs, waterLogs, healthGoals] = await Promise.all([
-      this.supabaseService.getFoodLogs(userId, {}),
-      this.supabaseService.getExerciseLogs(userId, {}),
-      this.supabaseService.getSleepLogsByUserId(userId),
-      this.supabaseService.getWaterLogsByUserId(userId),
-      this.supabaseService.getHealthGoalsByUserId(userId),
-    ]);
+    const [foodLogs, exerciseLogs, sleepLogs, waterLogs, healthGoals] =
+      await Promise.all([
+        this.supabaseService.getFoodLogs(userId, {}),
+        this.supabaseService.getExerciseLogs(userId, {}),
+        this.supabaseService.getSleepLogsByUserId(userId),
+        this.supabaseService.getWaterLogsByUserId(userId),
+        this.supabaseService.getHealthGoalsByUserId(userId),
+      ]);
 
     return {
       foodLogs,
@@ -784,13 +803,19 @@ export class AIService {
    */
   private calculateHealthScores(healthData: any): any {
     const userData = healthData.userData || {};
-    const nutritionScore = this.calculateNutritionScore(healthData.foodLogs, userData);
-    const exerciseScore = this.calculateExerciseScore(healthData.exerciseLogs, userData);
+    const nutritionScore = this.calculateNutritionScore(
+      healthData.foodLogs,
+      userData,
+    );
+    const exerciseScore = this.calculateExerciseScore(
+      healthData.exerciseLogs,
+      userData,
+    );
     const sleepScore = this.calculateSleepScore(healthData.sleepLogs);
     const waterScore = this.calculateWaterScore(healthData.waterLogs, userData);
 
     const overallScore = Math.round(
-      (nutritionScore + exerciseScore + sleepScore + waterScore) / 4
+      (nutritionScore + exerciseScore + sleepScore + waterScore) / 4,
     );
 
     return {
@@ -805,7 +830,9 @@ export class AIService {
   /**
    * ดึงข้อมูลสุขภาพสำหรับการสร้างคำแนะนำ
    */
-  private async getHealthMetricsForRecommendations(userId: number): Promise<any> {
+  private async getHealthMetricsForRecommendations(
+    userId: number,
+  ): Promise<any> {
     const [healthAnalysis, healthGoals] = await Promise.all([
       this.analyzeUserHealth(userId),
       this.supabaseService.getHealthGoalsByUserId(userId),
@@ -840,59 +867,65 @@ export class AIService {
   /**
    * สร้างการวิเคราะห์สุขภาพแบบ fallback
    */
-  private generateFallbackHealthAnalysis(userData: any, healthData: any): string {
+  private generateFallbackHealthAnalysis(
+    userData: any,
+    healthData: any,
+  ): string {
     const analysis: string[] = [];
-    
+
     if (healthData.foodLogs && healthData.foodLogs.length > 0) {
       analysis.push('ข้อมูลโภชนาการ: มีการบันทึกอาหารอย่างสม่ำเสมอ');
     } else {
       analysis.push('ข้อมูลโภชนาการ: ควรเริ่มบันทึกอาหารเพื่อติดตามสุขภาพ');
     }
-    
+
     if (healthData.exerciseLogs && healthData.exerciseLogs.length > 0) {
       analysis.push('ข้อมูลการออกกำลังกาย: มีการออกกำลังกายอย่างสม่ำเสมอ');
     } else {
       analysis.push('ข้อมูลการออกกำลังกาย: ควรเพิ่มการออกกำลังกาย');
     }
-    
+
     if (healthData.sleepLogs && healthData.sleepLogs.length > 0) {
       analysis.push('ข้อมูลการนอน: มีการติดตามการนอน');
     } else {
       analysis.push('ข้อมูลการนอน: ควรติดตามคุณภาพการนอน');
     }
-    
+
     if (healthData.waterLogs && healthData.waterLogs.length > 0) {
       analysis.push('ข้อมูลการดื่มน้ำ: มีการติดตามการดื่มน้ำ');
     } else {
       analysis.push('ข้อมูลการดื่มน้ำ: ควรติดตามการดื่มน้ำ');
     }
-    
+
     return analysis.join('\n');
   }
 
   /**
    * สร้างคำแนะนำแบบ fallback
    */
-  private generateFallbackRecommendations(userData: any, healthMetrics: any): string {
+  private generateFallbackRecommendations(
+    userData: any,
+    healthMetrics: any,
+  ): string {
     const recommendations: string[] = [];
-    
+
     // Basic health recommendations based on user data
     if (userData.age && userData.age > 40) {
       recommendations.push('ควรตรวจสุขภาพประจำปีอย่างสม่ำเสมอ');
     }
-    
+
     if (userData.weight_kg && userData.height_cm) {
       const bmi = userData.weight_kg / Math.pow(userData.height_cm / 100, 2);
       if (bmi > 25) {
         recommendations.push('ควรควบคุมน้ำหนักให้อยู่ในเกณฑ์ปกติ');
       }
     }
-    
+
     recommendations.push('ควรรับประทานอาหารให้ครบ 5 หมู่');
     recommendations.push('ควรออกกำลังกายอย่างน้อย 150 นาทีต่อสัปดาห์');
     recommendations.push('ควรนอนหลับให้เพียงพอ 7-9 ชั่วโมงต่อคืน');
     recommendations.push('ควรดื่มน้ำให้เพียงพอ 8-10 แก้วต่อวัน');
-    
+
     return recommendations.join('\n');
   }
 }

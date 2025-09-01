@@ -46,7 +46,10 @@ export interface IBaseController<T, CreateDto, UpdateDto, ResponseDtoType> {
     searchDto?: any,
   ): Promise<ResponseDto<{ data: ResponseDtoType[]; total: number }>>;
   findById(id: number): Promise<ResponseDto<ResponseDtoType>>;
-  update(id: number, updateDto: UpdateDto): Promise<ResponseDto<ResponseDtoType>>;
+  update(
+    id: number,
+    updateDto: UpdateDto,
+  ): Promise<ResponseDto<ResponseDtoType>>;
   delete(id: number): Promise<ResponseDto<{ message: string }>>;
 }
 
@@ -62,7 +65,12 @@ export interface IPaginatedController<T, SearchDto, ResponseDtoType> {
   >;
 }
 
-export interface IUserSpecificController<T, CreateDto, UpdateDto, ResponseDtoType> {
+export interface IUserSpecificController<
+  T,
+  CreateDto,
+  UpdateDto,
+  ResponseDtoType,
+> {
   createForUser(
     userId: number,
     createDto: CreateDto,

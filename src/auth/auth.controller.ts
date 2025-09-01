@@ -31,7 +31,9 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   async register(@Body() registerDto: RegisterDto): Promise<AuthResponseDto> {
     try {
-      this.logger.log(`Registration request received for: ${registerDto.email}`);
+      this.logger.log(
+        `Registration request received for: ${registerDto.email}`,
+      );
       const result = await this.authService.register(registerDto);
       this.logger.log(`Registration successful for: ${registerDto.email}`);
       return result;

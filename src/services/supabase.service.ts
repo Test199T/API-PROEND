@@ -48,15 +48,62 @@ export class SupabaseService implements OnModuleInit {
     }
   }
 
-  // User Management
+  // User Management with Enhanced Profile Support
   async createUser(userData: any) {
+    // เตรียมข้อมูลสำหรับ users table
+    const userFields = {
+      username: userData.username,
+      email: userData.email,
+      password_hash: userData.password_hash,
+      first_name: userData.first_name,
+      last_name: userData.last_name,
+      date_of_birth: userData.date_of_birth,
+      gender: userData.gender,
+      height_cm: userData.height_cm,
+      weight_kg: userData.weight_kg,
+      activity_level: userData.activity_level,
+    };
+
     const { data, error } = await this.supabase
       .from('users')
-      .insert(userData)
+      .insert(userFields)
       .select()
       .single();
 
     if (error) throw error;
+
+    // เพิ่มข้อมูลเพิ่มเติมในรูปแบบ JSON ถ้ามี
+    if (
+      userData.health_data ||
+      userData.health_goals ||
+      userData.nutrition_goals ||
+      userData.daily_behavior ||
+      userData.medical_history
+    ) {
+      const additionalData: any = {};
+
+      if (userData.health_data)
+        additionalData.health_data = userData.health_data;
+      if (userData.health_goals)
+        additionalData.health_goals = userData.health_goals;
+      if (userData.nutrition_goals)
+        additionalData.nutrition_goals = userData.nutrition_goals;
+      if (userData.daily_behavior)
+        additionalData.daily_behavior = userData.daily_behavior;
+      if (userData.medical_history)
+        additionalData.medical_history = userData.medical_history;
+
+      const { data: updatedData, error: updateError } = await this.supabase
+        .from('users')
+        .update(additionalData)
+        .eq('id', data.id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+      return updatedData;
+    }
+
     return data;
   }
 
@@ -78,7 +125,7 @@ export class SupabaseService implements OnModuleInit {
       .eq('email', email)
       .single();
 
-    if (error) throw error;
+    if (error && error.code !== 'PGRST116') throw error;
     return data;
   }
 
@@ -89,14 +136,54 @@ export class SupabaseService implements OnModuleInit {
       .eq('username', username)
       .single();
 
-    if (error) throw error;
+    if (error && error.code !== 'PGRST116') throw error;
     return data;
   }
 
   async updateUser(id: number, updateData: any) {
+    // แยกข้อมูลออกเป็น basic fields และ extended fields
+    const basicFields: any = {};
+    const extendedFields: any = {};
+
+    // Basic user fields ที่เป็น column ใน database
+    const basicFieldNames = [
+      'first_name',
+      'last_name',
+      'date_of_birth',
+      'gender',
+      'height_cm',
+      'weight_kg',
+      'activity_level',
+      'is_active',
+    ];
+
+    // Extended fields ที่เก็บเป็น JSON
+    const extendedFieldNames = [
+      'health_data',
+      'health_goals',
+      'nutrition_goals',
+      'daily_behavior',
+      'medical_history',
+    ];
+
+    // แยกข้อมูล
+    Object.keys(updateData).forEach((key) => {
+      if (basicFieldNames.includes(key)) {
+        basicFields[key] = updateData[key];
+      } else if (extendedFieldNames.includes(key)) {
+        extendedFields[key] = updateData[key];
+      }
+    });
+
+    // รวมข้อมูลทั้งหมดเข้าด้วยกัน
+    const allUpdateData = { ...basicFields, ...extendedFields };
+
     const { data, error } = await this.supabase
       .from('users')
-      .update(updateData)
+      .update({
+        ...allUpdateData,
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', id)
       .select()
       .single();
@@ -353,7 +440,9 @@ export class SupabaseService implements OnModuleInit {
   async getDailySleepStats(userId: number, date: string) {
     const { data, error } = await this.supabase
       .from('sleep_log')
-      .select('sleep_duration, sleep_quality, sleep_efficiency, bedtime, wake_time')
+      .select(
+        'sleep_duration, sleep_quality, sleep_efficiency, bedtime, wake_time',
+      )
       .eq('user_id', userId)
       .gte('sleep_date', `${date}T00:00:00`)
       .lt('sleep_date', `${date}T23:59:59`);
@@ -370,9 +459,16 @@ export class SupabaseService implements OnModuleInit {
       };
     }
 
-    const totalSleepTime = data.reduce((sum, log) => sum + (log.sleep_duration || 0), 0);
-    const averageQuality = data.reduce((sum, log) => sum + (log.sleep_quality || 0), 0) / data.length;
-    const averageEfficiency = data.reduce((sum, log) => sum + (log.sleep_efficiency || 0), 0) / data.length;
+    const totalSleepTime = data.reduce(
+      (sum, log) => sum + (log.sleep_duration || 0),
+      0,
+    );
+    const averageQuality =
+      data.reduce((sum, log) => sum + (log.sleep_quality || 0), 0) /
+      data.length;
+    const averageEfficiency =
+      data.reduce((sum, log) => sum + (log.sleep_efficiency || 0), 0) /
+      data.length;
 
     return {
       date,
@@ -383,7 +479,11 @@ export class SupabaseService implements OnModuleInit {
     };
   }
 
-  async getWeeklySleepStats(userId: number, startDate: string, endDate: string) {
+  async getWeeklySleepStats(
+    userId: number,
+    startDate: string,
+    endDate: string,
+  ) {
     const { data, error } = await this.supabase
       .from('sleep_log')
       .select('sleep_duration, sleep_quality, sleep_efficiency, sleep_date')
@@ -406,27 +506,44 @@ export class SupabaseService implements OnModuleInit {
       };
     }
 
-    const totalSleepTime = data.reduce((sum, log) => sum + (log.sleep_duration || 0), 0);
-    const averageQuality = data.reduce((sum, log) => sum + (log.sleep_quality || 0), 0) / data.length;
-    const averageEfficiency = data.reduce((sum, log) => sum + (log.sleep_efficiency || 0), 0) / data.length;
+    const totalSleepTime = data.reduce(
+      (sum, log) => sum + (log.sleep_duration || 0),
+      0,
+    );
+    const averageQuality =
+      data.reduce((sum, log) => sum + (log.sleep_quality || 0), 0) /
+      data.length;
+    const averageEfficiency =
+      data.reduce((sum, log) => sum + (log.sleep_efficiency || 0), 0) /
+      data.length;
 
     // Group by date
-    const dailyStats = data.reduce((acc, log) => {
-      const date = log.sleep_date.split('T')[0];
-      if (!acc[date]) {
-        acc[date] = { date, totalSleepTime: 0, quality: 0, efficiency: 0, count: 0 };
-      }
-      acc[date].totalSleepTime += log.sleep_duration || 0;
-      acc[date].quality += log.sleep_quality || 0;
-      acc[date].efficiency += log.sleep_efficiency || 0;
-      acc[date].count += 1;
-      return acc;
-    }, {} as Record<string, any>);
+    const dailyStats = data.reduce(
+      (acc, log) => {
+        const date = log.sleep_date.split('T')[0];
+        if (!acc[date]) {
+          acc[date] = {
+            date,
+            totalSleepTime: 0,
+            quality: 0,
+            efficiency: 0,
+            count: 0,
+          };
+        }
+        acc[date].totalSleepTime += log.sleep_duration || 0;
+        acc[date].quality += log.sleep_quality || 0;
+        acc[date].efficiency += log.sleep_efficiency || 0;
+        acc[date].count += 1;
+        return acc;
+      },
+      {} as Record<string, any>,
+    );
 
     // Calculate averages for each day
-    Object.values(dailyStats).forEach(day => {
+    Object.values(dailyStats).forEach((day) => {
       day.averageQuality = Math.round((day.quality / day.count) * 100) / 100;
-      day.averageEfficiency = Math.round((day.efficiency / day.count) * 100) / 100;
+      day.averageEfficiency =
+        Math.round((day.efficiency / day.count) * 100) / 100;
     });
 
     return {
@@ -460,10 +577,12 @@ export class SupabaseService implements OnModuleInit {
 
     if (error) throw error;
 
-    return data?.map(log => ({
-      date: log.sleep_date,
-      quality: log.sleep_quality,
-    })) || [];
+    return (
+      data?.map((log) => ({
+        date: log.sleep_date,
+        quality: log.sleep_quality,
+      })) || []
+    );
   }
 
   async getSleepRecommendations(userId: string) {
@@ -475,7 +594,9 @@ export class SupabaseService implements OnModuleInit {
     // Get recent sleep data for analysis
     const { data, error } = await this.supabase
       .from('sleep_log')
-      .select('sleep_duration, sleep_quality, sleep_efficiency, bedtime, wake_time')
+      .select(
+        'sleep_duration, sleep_quality, sleep_efficiency, bedtime, wake_time',
+      )
       .eq('user_id', numericUserId)
       .order('sleep_date', { ascending: false })
       .limit(7);
@@ -484,25 +605,37 @@ export class SupabaseService implements OnModuleInit {
 
     if (!data || data.length === 0) {
       return {
-        recommendations: ['Start logging your sleep to get personalized recommendations'],
+        recommendations: [
+          'Start logging your sleep to get personalized recommendations',
+        ],
         averageSleepTime: 0,
         averageQuality: 0,
       };
     }
 
-    const averageSleepTime = data.reduce((sum, log) => sum + (log.sleep_duration || 0), 0) / data.length;
-    const averageQuality = data.reduce((sum, log) => sum + (log.sleep_quality || 0), 0) / data.length;
+    const averageSleepTime =
+      data.reduce((sum, log) => sum + (log.sleep_duration || 0), 0) /
+      data.length;
+    const averageQuality =
+      data.reduce((sum, log) => sum + (log.sleep_quality || 0), 0) /
+      data.length;
 
     const recommendations: string[] = [];
 
     if (averageSleepTime < 7) {
-      recommendations.push('Consider increasing your sleep duration to at least 7-8 hours per night');
+      recommendations.push(
+        'Consider increasing your sleep duration to at least 7-8 hours per night',
+      );
     }
     if (averageQuality < 3) {
-      recommendations.push('Try improving your sleep environment and bedtime routine');
+      recommendations.push(
+        'Try improving your sleep environment and bedtime routine',
+      );
     }
     if (averageSleepTime > 9) {
-      recommendations.push('You might be oversleeping. Consider reducing sleep duration to 7-8 hours');
+      recommendations.push(
+        'You might be oversleeping. Consider reducing sleep duration to 7-8 hours',
+      );
     }
 
     if (recommendations.length === 0) {
@@ -620,7 +753,8 @@ export class SupabaseService implements OnModuleInit {
 
     if (error) throw error;
 
-    const totalAmount = data?.reduce((sum, log) => sum + (log.amount || 0), 0) || 0;
+    const totalAmount =
+      data?.reduce((sum, log) => sum + (log.amount || 0), 0) || 0;
     const goal = await this.getDailyWaterGoal(numericUserId);
 
     return {
@@ -633,7 +767,11 @@ export class SupabaseService implements OnModuleInit {
     };
   }
 
-  async getWeeklyWaterStats(userId: string, startDate: string, endDate: string) {
+  async getWeeklyWaterStats(
+    userId: string,
+    startDate: string,
+    endDate: string,
+  ) {
     const numericUserId = parseInt(userId, 10);
     if (isNaN(numericUserId)) {
       throw new Error('Invalid user ID format');
@@ -650,18 +788,28 @@ export class SupabaseService implements OnModuleInit {
     if (error) throw error;
 
     // Group by date
-    const dailyStats = data?.reduce((acc, log) => {
-      const date = log.consumed_at.split('T')[0];
-      if (!acc[date]) {
-        acc[date] = { date, totalAmount: 0, logCount: 0 };
-      }
-      acc[date].totalAmount += log.amount || 0;
-      acc[date].logCount += 1;
-      return acc;
-    }, {} as Record<string, { date: string; totalAmount: number; logCount: number }>) || {};
+    const dailyStats =
+      data?.reduce(
+        (acc, log) => {
+          const date = log.consumed_at.split('T')[0];
+          if (!acc[date]) {
+            acc[date] = { date, totalAmount: 0, logCount: 0 };
+          }
+          acc[date].totalAmount += log.amount || 0;
+          acc[date].logCount += 1;
+          return acc;
+        },
+        {} as Record<
+          string,
+          { date: string; totalAmount: number; logCount: number }
+        >,
+      ) || {};
 
     const goal = await this.getDailyWaterGoal(numericUserId);
-    const weeklyTotal = Object.values(dailyStats).reduce((sum, day) => sum + day.totalAmount, 0);
+    const weeklyTotal = Object.values(dailyStats).reduce(
+      (sum, day) => sum + day.totalAmount,
+      0,
+    );
     const weeklyGoal = goal * 7;
 
     return {
@@ -704,7 +852,7 @@ export class SupabaseService implements OnModuleInit {
 
   async getTodayWaterProgress(userId: number) {
     const today = new Date().toISOString().split('T')[0];
-    
+
     const { data, error } = await this.supabase
       .from('water_log')
       .select('amount')
@@ -713,10 +861,11 @@ export class SupabaseService implements OnModuleInit {
       .lt('consumed_at', `${today}T23:59:59`);
 
     if (error) throw error;
-    
-    const totalAmount = data?.reduce((sum, log) => sum + (log.amount || 0), 0) || 0;
+
+    const totalAmount =
+      data?.reduce((sum, log) => sum + (log.amount || 0), 0) || 0;
     const goal = await this.getDailyWaterGoal(userId);
-    
+
     return {
       consumed: totalAmount,
       goal: goal,
@@ -741,11 +890,15 @@ export class SupabaseService implements OnModuleInit {
     if (error) throw error;
 
     // Group by date and sum amounts
-    const dailyTotals = data?.reduce((acc, log) => {
-      const date = log.consumed_at.split('T')[0];
-      acc[date] = (acc[date] || 0) + (log.amount || 0);
-      return acc;
-    }, {} as Record<string, number>) || {};
+    const dailyTotals =
+      data?.reduce(
+        (acc, log) => {
+          const date = log.consumed_at.split('T')[0];
+          acc[date] = (acc[date] || 0) + (log.amount || 0);
+          return acc;
+        },
+        {} as Record<string, number>,
+      ) || {};
 
     return Object.entries(dailyTotals).map(([date, amount]) => ({
       date,
@@ -776,8 +929,10 @@ export class SupabaseService implements OnModuleInit {
 
     if (todayError || yesterdayError) throw todayError || yesterdayError;
 
-    const todayTotal = todayData?.reduce((sum, log) => sum + (log.amount || 0), 0) || 0;
-    const yesterdayTotal = yesterdayData?.reduce((sum, log) => sum + (log.amount || 0), 0) || 0;
+    const todayTotal =
+      todayData?.reduce((sum, log) => sum + (log.amount || 0), 0) || 0;
+    const yesterdayTotal =
+      yesterdayData?.reduce((sum, log) => sum + (log.amount || 0), 0) || 0;
     const goal = await this.getDailyWaterGoal(userId);
 
     const insights = {
@@ -786,8 +941,16 @@ export class SupabaseService implements OnModuleInit {
       goal: goal,
       todayProgress: Math.min(100, (todayTotal / goal) * 100),
       yesterdayProgress: Math.min(100, (yesterdayTotal / goal) * 100),
-      improvement: todayTotal > yesterdayTotal ? 'increased' : todayTotal < yesterdayTotal ? 'decreased' : 'same',
-      recommendation: todayTotal < goal * 0.8 ? 'Consider increasing water intake' : 'Good hydration habits!',
+      improvement:
+        todayTotal > yesterdayTotal
+          ? 'increased'
+          : todayTotal < yesterdayTotal
+            ? 'decreased'
+            : 'same',
+      recommendation:
+        todayTotal < goal * 0.8
+          ? 'Consider increasing water intake'
+          : 'Good hydration habits!',
     };
 
     return insights;
@@ -866,7 +1029,11 @@ export class SupabaseService implements OnModuleInit {
     return data;
   }
 
-  async getHealthMetricsSummary(userId: string, startDate: string, endDate: string) {
+  async getHealthMetricsSummary(
+    userId: string,
+    startDate: string,
+    endDate: string,
+  ) {
     const numericUserId = parseInt(userId, 10);
     if (isNaN(numericUserId)) {
       throw new Error('Invalid user ID format');
@@ -883,21 +1050,31 @@ export class SupabaseService implements OnModuleInit {
     if (error) throw error;
 
     // Group by metric type and calculate summary
-    const summary = data?.reduce((acc, metric) => {
-      const type = metric.metric_type;
-      if (!acc[type]) {
-        acc[type] = { count: 0, total: 0, min: Infinity, max: -Infinity, dates: [] };
-      }
-      acc[type].count++;
-      acc[type].total += metric.metric_value || 0;
-      acc[type].min = Math.min(acc[type].min, metric.metric_value || 0);
-      acc[type].max = Math.max(acc[type].max, metric.metric_value || 0);
-      acc[type].dates.push(metric.metric_date);
-      return acc;
-    }, {} as Record<string, any>) || {};
+    const summary =
+      data?.reduce(
+        (acc, metric) => {
+          const type = metric.metric_type;
+          if (!acc[type]) {
+            acc[type] = {
+              count: 0,
+              total: 0,
+              min: Infinity,
+              max: -Infinity,
+              dates: [],
+            };
+          }
+          acc[type].count++;
+          acc[type].total += metric.metric_value || 0;
+          acc[type].min = Math.min(acc[type].min, metric.metric_value || 0);
+          acc[type].max = Math.max(acc[type].max, metric.metric_value || 0);
+          acc[type].dates.push(metric.metric_date);
+          return acc;
+        },
+        {} as Record<string, any>,
+      ) || {};
 
     // Calculate averages
-    Object.keys(summary).forEach(type => {
+    Object.keys(summary).forEach((type) => {
       summary[type].average = summary[type].total / summary[type].count;
     });
 
@@ -934,16 +1111,24 @@ export class SupabaseService implements OnModuleInit {
     for (let i = 1; i < data.length; i++) {
       const current = data[i];
       const previous = data[i - 1];
-      const changePercentage = previous.metric_value !== 0 
-        ? ((current.metric_value - previous.metric_value) / previous.metric_value) * 100 
-        : 0;
-      
+      const changePercentage =
+        previous.metric_value !== 0
+          ? ((current.metric_value - previous.metric_value) /
+              previous.metric_value) *
+            100
+          : 0;
+
       trends.push({
         metric_type: metricType as any,
         current_value: current.metric_value,
         previous_value: previous.metric_value,
         change_percentage: Math.round(changePercentage * 100) / 100,
-        trend_direction: changePercentage > 0 ? 'increasing' : changePercentage < 0 ? 'decreasing' : 'stable',
+        trend_direction:
+          changePercentage > 0
+            ? 'increasing'
+            : changePercentage < 0
+              ? 'decreasing'
+              : 'stable',
         period_start: previous.metric_date,
         period_end: current.metric_date,
       });
@@ -1000,7 +1185,7 @@ export class SupabaseService implements OnModuleInit {
       return { min: 0, max: 0, range: 0 };
     }
 
-    const values = data.map(m => m.metric_value).filter(v => v !== null);
+    const values = data.map((m) => m.metric_value).filter((v) => v !== null);
     const min = Math.min(...values);
     const max = Math.max(...values);
 
@@ -1033,8 +1218,8 @@ export class SupabaseService implements OnModuleInit {
     // Basic analysis
     const analysis = {
       totalMetrics: data.length,
-      metricTypes: Array.from(new Set(data.map(m => m.metric_type))),
-      recentActivity: data.slice(0, 5).map(m => ({
+      metricTypes: Array.from(new Set(data.map((m) => m.metric_type))),
+      recentActivity: data.slice(0, 5).map((m) => ({
         type: m.metric_type,
         value: m.metric_value,
         date: m.metric_date,
@@ -1044,7 +1229,9 @@ export class SupabaseService implements OnModuleInit {
 
     // Add basic recommendations based on data
     if (data.length < 5) {
-      analysis.recommendations.push('Consider logging more health metrics for better insights');
+      analysis.recommendations.push(
+        'Consider logging more health metrics for better insights',
+      );
     }
 
     return analysis;
@@ -1060,7 +1247,11 @@ export class SupabaseService implements OnModuleInit {
     return data;
   }
 
-  async exportHealthMetrics(userId: string, format: string = 'json', query?: any) {
+  async exportHealthMetrics(
+    userId: string,
+    format: string = 'json',
+    query?: any,
+  ) {
     const numericUserId = parseInt(userId, 10);
     if (isNaN(numericUserId)) {
       throw new Error('Invalid user ID format');
@@ -1088,9 +1279,13 @@ export class SupabaseService implements OnModuleInit {
 
     if (format === 'csv') {
       // Convert to CSV format
-      const csv = data?.map(metric => 
-        `${metric.metric_type},${metric.metric_value},${metric.metric_date}`
-      ).join('\n') || '';
+      const csv =
+        data
+          ?.map(
+            (metric) =>
+              `${metric.metric_type},${metric.metric_value},${metric.metric_date}`,
+          )
+          .join('\n') || '';
       return csv;
     }
 
@@ -1388,7 +1583,10 @@ export class SupabaseService implements OnModuleInit {
     return data?.notification_preferences;
   }
 
-  async updateUserNotificationPreferences(userId: string, notificationPreferences: any) {
+  async updateUserNotificationPreferences(
+    userId: string,
+    notificationPreferences: any,
+  ) {
     const { data, error } = await this.supabase
       .from('user_preferences')
       .update({ notification_preferences: notificationPreferences })
@@ -1484,7 +1682,11 @@ export class SupabaseService implements OnModuleInit {
     return data?.quiet_hours;
   }
 
-  async updateUserQuietHours(userId: string, startTime: string, endTime: string) {
+  async updateUserQuietHours(
+    userId: string,
+    startTime: string,
+    endTime: string,
+  ) {
     const quietHours = { start: startTime, end: endTime };
     const { data, error } = await this.supabase
       .from('user_preferences')
@@ -1508,7 +1710,7 @@ export class SupabaseService implements OnModuleInit {
       health_focus_areas: ['general_health'],
       custom_goals: [],
       timezone: 'UTC',
-      quiet_hours: { start: '22:00', end: '08:00' }
+      quiet_hours: { start: '22:00', end: '08:00' },
     };
 
     const { data, error } = await this.supabase

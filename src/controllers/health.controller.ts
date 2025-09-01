@@ -78,7 +78,7 @@ export class HealthController {
       const dbStart = Date.now();
       await this.supabaseService.healthCheck();
       const dbLatency = Date.now() - dbStart;
-      
+
       detailedHealth.services.database = {
         status: 'healthy',
         details: {
@@ -102,7 +102,7 @@ export class HealthController {
       const aiStart = Date.now();
       const aiHealth = await this.openRouterService.healthCheck();
       const aiLatency = Date.now() - aiStart;
-      
+
       detailedHealth.services.ai = {
         status: aiHealth ? 'healthy' : 'unhealthy',
         details: {
@@ -113,7 +113,7 @@ export class HealthController {
           model: process.env.OPENROUTER_MODEL || 'default',
         },
       };
-      
+
       if (!aiHealth) {
         detailedHealth.status = 'degraded';
       }
