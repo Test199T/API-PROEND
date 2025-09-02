@@ -1,0 +1,27 @@
+meta {
+  name: VITA WISE AI - Profile System
+}
+
+auth {
+  mode: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+vars:pre-request {
+  baseUrl: http://localhost:3000
+  access_token: 
+  user_email: postman_test@gmail.com
+  user_password: password123
+}
+
+script:pre-request {
+  // Set base URL
+  bru.setGlobalEnvVar('baseUrl', 'http://localhost:3000');
+}
+
+docs {
+  Complete API testing for VITA WISE AI Profile System
+}

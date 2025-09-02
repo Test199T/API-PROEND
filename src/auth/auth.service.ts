@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { LoginDto, RegisterDto, AuthResponseDto } from './dto/auth.dto';
 import * as jwt from 'jsonwebtoken';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -62,13 +63,14 @@ export class AuthService {
 
       this.logger.log(`User created in auth: ${authData.user.id}`);
 
+      // Store password as plain text (for testing)
       // Then, create user record in our users table
       const { data: userData, error: userError } = await this.supabase
         .from('users')
         .insert({
           username: registerDto.email.split('@')[0], // Use email prefix as username
           email: registerDto.email,
-          password_hash: registerDto.password, // Store the actual password
+          password_hash: registerDto.password, // Store plain text password for testing
           first_name: registerDto.firstName,
           last_name: registerDto.lastName,
           // date_of_birth: null, // Optional
@@ -139,6 +141,8 @@ export class AuthService {
 
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     try {
+      this.logger.log(`Login attempt for: ${loginDto.email}`);
+      
       // First, check if user exists in our database
       const { data: userData, error: userError } = await this.supabase
         .from('users')
@@ -147,17 +151,25 @@ export class AuthService {
         .single();
 
       if (userError || !userData) {
+        this.logger.warn(`User not found: ${loginDto.email}`);
         throw new UnauthorizedException('Invalid credentials');
       }
 
-      // Check password
+      // Check if user is active
+      if (!userData.is_active) {
+        this.logger.warn(`Inactive user login attempt: ${loginDto.email}`);
+        throw new UnauthorizedException('Account is deactivated');
+      }
+
+      // Verify password using plain text comparison (for testing)
       if (userData.password_hash !== loginDto.password) {
+        this.logger.warn(`Invalid password for: ${loginDto.email}`);
         throw new UnauthorizedException('Invalid credentials');
       }
 
       // Generate JWT tokens
       const payload = {
-        sub: userData.id,
+        sub: userData.id, // Use id (numeric primary key)
         email: userData.email,
         username: userData.username,
       };
@@ -169,17 +181,20 @@ export class AuthService {
         expiresIn: '7d',
       });
 
+      this.logger.log(`Login successful for: ${loginDto.email}`);
+
       return {
         access_token: accessToken,
         refresh_token: refreshToken,
         user: {
-          id: userData.id,
+          id: userData.id, // Use id (numeric primary key)
           email: userData.email,
           firstName: userData.first_name,
           lastName: userData.last_name,
         },
       };
     } catch (error) {
+      this.logger.error(`Login failed for ${loginDto.email}:`, error);
       if (error instanceof UnauthorizedException) {
         throw error;
       }
@@ -239,34 +254,33 @@ export class AuthService {
 
   async getProfile(accessToken: string): Promise<any> {
     try {
-      const {
-        data: { user },
-        error,
-      } = await this.supabase.auth.getUser(accessToken);
-
-      if (error || !user) {
-        throw new UnauthorizedException('Invalid token');
-      }
+      // Verify JWT token using jwt library
+      const payload = jwt.verify(accessToken, this.jwtSecret) as any;
+      const userId = payload.sub;
 
       // Get user profile from our users table
-      const { data: userData } = await this.supabase
+      const { data: userData, error } = await this.supabase
         .from('users')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('id', userId) // Use id (numeric primary key)
         .single();
 
+      if (error || !userData) {
+        throw new UnauthorizedException('User not found');
+      }
+
       return {
-        id: user.id,
-        email: user.email,
-        firstName: userData?.first_name || '',
-        lastName: userData?.last_name || '',
-        username: userData?.username || '',
-        dateOfBirth: userData?.date_of_birth || null,
-        gender: userData?.gender || null,
-        height: userData?.height || null,
-        profileImageUrl: userData?.profile_image_url || null,
-        createdAt: userData?.created_at || user.created_at,
-        updatedAt: userData?.updated_at || null,
+        id: userData.id, // Use id (numeric primary key)
+        email: userData.email,
+        firstName: userData.first_name || '',
+        lastName: userData.last_name || '',
+        username: userData.username || '',
+        dateOfBirth: userData.date_of_birth || null,
+        gender: userData.gender || null,
+        height: userData.height_cm || null, // Use height_cm
+        profileImageUrl: userData.profile_image_url || null,
+        createdAt: userData.created_at,
+        updatedAt: userData.updated_at || null,
       };
     } catch (error) {
       throw new UnauthorizedException('Invalid token');
@@ -275,14 +289,9 @@ export class AuthService {
 
   async updateProfile(accessToken: string, updateData: any): Promise<any> {
     try {
-      const {
-        data: { user },
-        error,
-      } = await this.supabase.auth.getUser(accessToken);
-
-      if (error || !user) {
-        throw new UnauthorizedException('Invalid token');
-      }
+      // Verify JWT token using jwt library
+      const payload = jwt.verify(accessToken, this.jwtSecret) as any;
+      const userId = payload.sub;
 
       // Update user profile in our users table
       const { data: userData, error: updateError } = await this.supabase
@@ -293,11 +302,11 @@ export class AuthService {
           username: updateData.username,
           date_of_birth: updateData.dateOfBirth,
           gender: updateData.gender,
-          height: updateData.height,
+          height_cm: updateData.height, // Use height_cm
           profile_image_url: updateData.profileImageUrl,
-          updated_at: new Date(),
+          updated_at: new Date().toISOString(),
         })
-        .eq('user_id', user.id)
+        .eq('id', userId) // Use id (numeric primary key)
         .select()
         .single();
 
@@ -306,16 +315,16 @@ export class AuthService {
       }
 
       return {
-        id: user.id,
-        email: user.email,
+        id: userData.id, // Use id (numeric primary key)
+        email: userData.email,
         firstName: userData.first_name || '',
         lastName: userData.last_name || '',
         username: userData.username || '',
         dateOfBirth: userData.date_of_birth || null,
         gender: userData.gender || null,
-        height: userData.height || null,
+        height: userData.height_cm || null, // Use height_cm
         profileImageUrl: userData.profile_image_url || null,
-        createdAt: userData.created_at || user.created_at,
+        createdAt: userData.created_at,
         updatedAt: userData.updated_at || null,
       };
     } catch (error) {

@@ -1,0 +1,1007 @@
+
+{
+  "info": {
+    "name": "🍽️ Food Log API - VITA WISE AI",
+    "description": "Complete API collection for Food Log endpoints with authentication and comprehensive testing scenarios",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{auth_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "food_log_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data.access_token) {",
+                  "        pm.collectionVariables.set('auth_token', response.data.access_token);",
+                  "        pm.collectionVariables.set('user_id', response.data.user.id);",
+                  "        console.log('✅ Login successful, token saved');",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🍽️ Food Log CRUD Operations",
+      "item": [
+        {
+          "name": "Create Food Log Entry",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data.id) {",
+                  "        pm.collectionVariables.set('food_log_id', response.data.id);",
+                  "        console.log('✅ Food log created with ID:', response.data.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meal_type\": \"breakfast\",\n  \"food_name\": \"ข้าวผัดกุ้ง\",\n  \"quantity\": 1,\n  \"unit\": \"จาน\",\n  \"calories\": 450,\n  \"protein_g\": 25,\n  \"carbs_g\": 65,\n  \"fat_g\": 12,\n  \"fiber_g\": 3,\n  \"sugar_g\": 8,\n  \"sodium_mg\": 800,\n  \"notes\": \"อาหารเช้าที่บ้าน ใส่กุ้งเยอะ\",\n  \"consumed_at\": \"2025-02-09T07:30:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/food-log",
+              "host": ["{{base_url}}"],
+              "path": ["food-log"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Food Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log",
+              "host": ["{{base_url}}"],
+              "path": ["food-log"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Food Logs with Query Parameters",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log?meal_type=breakfast&start_date=2025-02-01&end_date=2025-02-09&limit=10&offset=0",
+              "host": ["{{base_url}}"],
+              "path": ["food-log"],
+              "query": [
+                {
+                  "key": "meal_type",
+                  "value": "breakfast"
+                },
+                {
+                  "key": "start_date",
+                  "value": "2025-02-01"
+                },
+                {
+                  "key": "end_date",
+                  "value": "2025-02-09"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Single Food Log by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/{{food_log_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "{{food_log_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Food Log Entry",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"food_name\": \"ข้าวผัดกุ้งใหญ่\",\n  \"quantity\": 1.5,\n  \"calories\": 520,\n  \"protein_g\": 30,\n  \"notes\": \"อัปเดต: เพิ่มกุ้งใหญ่และไข่\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/food-log/{{food_log_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "{{food_log_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Food Log Entry",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/{{food_log_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "{{food_log_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📊 Food Log Analytics & Statistics",
+      "item": [
+        {
+          "name": "Get Food Log Stats (Today)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/stats",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "stats"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Food Log Stats (Specific Date)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/stats?date=2025-02-09",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "stats"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2025-02-09"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Food Log Trends (7 days)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/trends?days=7",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "trends"],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "7"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Food Log Trends (30 days)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/trends?days=30",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "trends"],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "30"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Calories Summary (Weekly)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/calories/summary?startDate=2025-02-03&endDate=2025-02-09",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "calories", "summary"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2025-02-03"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2025-02-09"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🎯 New Dashboard & Summary Endpoints",
+      "item": [
+        {
+          "name": "Get Food Log Summary (Weekly)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/summary?period=week",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "summary"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "week"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Food Log Summary (Monthly)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/summary?period=month",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "summary"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "month"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Food Log Summary (Custom Date Range)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/summary?startDate=2025-02-01&endDate=2025-02-09",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "summary"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2025-02-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2025-02-09"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Food Log Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "dashboard"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔍 Meal Type & Filtering",
+      "item": [
+        {
+          "name": "Get Breakfast Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/meal-types/breakfast",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "meal-types", "breakfast"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Lunch Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/meal-types/lunch",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "meal-types", "lunch"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Dinner Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/meal-types/dinner",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "meal-types", "dinner"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Snack Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/meal-types/snack",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "meal-types", "snack"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🤖 AI & Recommendations",
+      "item": [
+        {
+          "name": "Get Nutrition Analysis",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/nutrition-analysis",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "nutrition-analysis"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Nutrition Analysis (Specific Date)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/nutrition-analysis?date=2025-02-09",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "nutrition-analysis"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2025-02-09"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Food Recommendations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/recommendations",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "recommendations"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📝 Sample Data Creation",
+      "item": [
+        {
+          "name": "Create Lunch Entry",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meal_type\": \"lunch\",\n  \"food_name\": \"ส้มตำไทย\",\n  \"quantity\": 1,\n  \"unit\": \"จาน\",\n  \"calories\": 280,\n  \"protein_g\": 8,\n  \"carbs_g\": 35,\n  \"fat_g\": 12,\n  \"fiber_g\": 6,\n  \"sugar_g\": 25,\n  \"sodium_mg\": 1200,\n  \"notes\": \"ส้มตำไทยแท้ เผ็ดมาก\",\n  \"consumed_at\": \"2025-02-09T12:30:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/food-log",
+              "host": ["{{base_url}}"],
+              "path": ["food-log"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Dinner Entry",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meal_type\": \"dinner\",\n  \"food_name\": \"แกงเขียวหวานไก่\",\n  \"quantity\": 1,\n  \"unit\": \"ถ้วย\",\n  \"calories\": 380,\n  \"protein_g\": 28,\n  \"carbs_g\": 15,\n  \"fat_g\": 25,\n  \"fiber_g\": 4,\n  \"sugar_g\": 8,\n  \"sodium_mg\": 950,\n  \"notes\": \"แกงเขียวหวานไก่ กินกับข้าวสวย\",\n  \"consumed_at\": \"2025-02-09T19:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/food-log",
+              "host": ["{{base_url}}"],
+              "path": ["food-log"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Snack Entry",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meal_type\": \"snack\",\n  \"food_name\": \"มะม่วงน้ำดอกไม้\",\n  \"quantity\": 1,\n  \"unit\": \"ลูก\",\n  \"calories\": 150,\n  \"protein_g\": 2,\n  \"carbs_g\": 35,\n  \"fat_g\": 1,\n  \"fiber_g\": 5,\n  \"sugar_g\": 30,\n  \"sodium_mg\": 5,\n  \"notes\": \"ผลไม้หลังอาหารเย็น\",\n  \"consumed_at\": \"2025-02-09T20:30:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/food-log",
+              "host": ["{{base_url}}"],
+              "path": ["food-log"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🧪 Error Handling Tests",
+      "item": [
+        {
+          "name": "Create Food Log - Invalid Data",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meal_type\": \"invalid_meal\",\n  \"food_name\": \"\",\n  \"quantity\": -1,\n  \"unit\": \"\",\n  \"calories\": -100\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/food-log",
+              "host": ["{{base_url}}"],
+              "path": ["food-log"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Food Log - Non-existent ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/99999",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "99999"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Food Log - Non-existent ID",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"food_name\": \"Updated Food\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/food-log/99999",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "99999"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Access Without Authentication",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/food-log",
+              "host": ["{{base_url}}"],
+              "path": ["food-log"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🍎 Complete Food Log Examples",
+      "item": [
+        {
+          "name": "Create Thai Breakfast Set",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meal_type\": \"breakfast\",\n  \"food_name\": \"โจ๊กหมู\",\n  \"quantity\": 1,\n  \"unit\": \"ชาม\",\n  \"calories\": 320,\n  \"protein_g\": 18,\n  \"carbs_g\": 45,\n  \"fat_g\": 8,\n  \"fiber_g\": 2,\n  \"sugar_g\": 3,\n  \"sodium_mg\": 850,\n  \"notes\": \"โจ๊กหมูสับ ใส่ไข่ดาว\",\n  \"consumed_at\": \"2025-02-08T07:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/food-log",
+              "host": ["{{base_url}}"],
+              "path": ["food-log"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Healthy Lunch",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meal_type\": \"lunch\",\n  \"food_name\": \"สลัดผักรวมไก่ย่าง\",\n  \"quantity\": 1,\n  \"unit\": \"จาน\",\n  \"calories\": 350,\n  \"protein_g\": 35,\n  \"carbs_g\": 20,\n  \"fat_g\": 15,\n  \"fiber_g\": 8,\n  \"sugar_g\": 12,\n  \"sodium_mg\": 600,\n  \"notes\": \"สลัดผักสด ไก่ย่าง น้ำสลัดโยเกิร์ต\",\n  \"consumed_at\": \"2025-02-08T12:15:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/food-log",
+              "host": ["{{base_url}}"],
+              "path": ["food-log"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Traditional Dinner",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meal_type\": \"dinner\",\n  \"food_name\": \"ข้าวกับแกงส้มปลาช่อน\",\n  \"quantity\": 1,\n  \"unit\": \"ชุด\",\n  \"calories\": 420,\n  \"protein_g\": 30,\n  \"carbs_g\": 55,\n  \"fat_g\": 10,\n  \"fiber_g\": 6,\n  \"sugar_g\": 15,\n  \"sodium_mg\": 1100,\n  \"notes\": \"แกงส้มปลาช่อน ผักรวม กินกับข้าวสวย\",\n  \"consumed_at\": \"2025-02-08T18:45:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/food-log",
+              "host": ["{{base_url}}"],
+              "path": ["food-log"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Healthy Snack",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meal_type\": \"snack\",\n  \"food_name\": \"ถั่วอัลมอนด์\",\n  \"quantity\": 30,\n  \"unit\": \"เม็ด\",\n  \"calories\": 180,\n  \"protein_g\": 6,\n  \"carbs_g\": 6,\n  \"fat_g\": 15,\n  \"fiber_g\": 4,\n  \"sugar_g\": 1,\n  \"sodium_mg\": 2,\n  \"notes\": \"ถั่วอัลมอนด์คั่ว ไม่ใส่เกลือ\",\n  \"consumed_at\": \"2025-02-08T15:30:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/food-log",
+              "host": ["{{base_url}}"],
+              "path": ["food-log"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📋 Testing Scenarios",
+      "item": [
+        {
+          "name": "Bulk Create Multiple Meals (Same Day)",
+          "item": [
+            {
+              "name": "Morning Coffee",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{auth_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"meal_type\": \"breakfast\",\n  \"food_name\": \"กาแฟดำ\",\n  \"quantity\": 1,\n  \"unit\": \"แก้ว\",\n  \"calories\": 5,\n  \"protein_g\": 0.3,\n  \"carbs_g\": 1,\n  \"fat_g\": 0,\n  \"fiber_g\": 0,\n  \"sugar_g\": 0,\n  \"sodium_mg\": 5,\n  \"notes\": \"กาแฟดำไม่ใส่น้ำตาล\",\n  \"consumed_at\": \"2025-02-09T06:30:00.000Z\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/food-log",
+                  "host": ["{{base_url}}"],
+                  "path": ["food-log"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Mid-Morning Fruit",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{auth_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"meal_type\": \"snack\",\n  \"food_name\": \"กล้วยหอม\",\n  \"quantity\": 2,\n  \"unit\": \"ลูก\",\n  \"calories\": 210,\n  \"protein_g\": 2.6,\n  \"carbs_g\": 54,\n  \"fat_g\": 0.8,\n  \"fiber_g\": 6,\n  \"sugar_g\": 28,\n  \"sodium_mg\": 2,\n  \"notes\": \"กล้วยหอมสุก 2 ลูก\",\n  \"consumed_at\": \"2025-02-09T10:00:00.000Z\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/food-log",
+                  "host": ["{{base_url}}"],
+                  "path": ["food-log"]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-set current timestamp for consumed_at if needed",
+          "if (pm.request.body && pm.request.body.mode === 'raw') {",
+          "    try {",
+          "        const body = JSON.parse(pm.request.body.raw);",
+          "        if (body.consumed_at === 'NOW') {",
+          "            body.consumed_at = new Date().toISOString();",
+          "            pm.request.body.raw = JSON.stringify(body, null, 2);",
+          "        }",
+          "    } catch (e) {",
+          "        // Ignore JSON parse errors",
+          "    }",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test script for all requests",
+          "pm.test('Response time is less than 5000ms', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "pm.test('Response has correct content type', function () {",
+          "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+          "});",
+          "",
+          "if (pm.response.code === 200 || pm.response.code === 201) {",
+          "    pm.test('Response has success structure', function () {",
+          "        const response = pm.response.json();",
+          "        pm.expect(response).to.have.property('success');",
+          "        pm.expect(response).to.have.property('message');",
+          "        pm.expect(response).to.have.property('data');",
+          "    });",
+          "}"
+        ]
+      }
+    }
+  ]
+}

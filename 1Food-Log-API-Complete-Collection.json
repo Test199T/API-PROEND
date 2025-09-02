@@ -1,0 +1,802 @@
+{
+  "info": {
+    "name": "🍽️ Food Log API - VITA WISE AI [UPDATED]",
+    "description": "Complete API collection for Food Log system including authentication, CRUD operations, dashboard data, and analytics",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "2.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "food_log_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.user) {",
+                  "        pm.collectionVariables.set('user_id', response.data.user.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"test@vitawise.com\",\n  \"password\": \"SecurePass123!\",\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\",\n  \"date_of_birth\": \"1990-01-15\",\n  \"gender\": \"male\",\n  \"height_cm\": 175,\n  \"weight_kg\": 70,\n  \"activity_level\": \"moderate\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register a new user account"
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.access_token) {",
+                  "        pm.collectionVariables.set('jwt_token', response.data.access_token);",
+                  "    }",
+                  "    if (response.data && response.data.user) {",
+                  "        pm.collectionVariables.set('user_id', response.data.user.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@vitawise.com\",\n  \"password\": \"SecurePass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login and get JWT token"
+          }
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "profile"]
+            },
+            "description": "Get user profile information"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🍽️ Food Log - CRUD Operations",
+      "item": [
+        {
+          "name": "Create Food Log Entry",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.id) {",
+                  "        pm.collectionVariables.set('food_log_id', response.data.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"food_name\": \"Grilled Chicken Breast\",\n  \"meal_type\": \"lunch\",\n  \"serving_size\": 150,\n  \"serving_unit\": \"grams\",\n  \"calories_per_serving\": 165,\n  \"protein_g\": 31.0,\n  \"carbs_g\": 0.0,\n  \"fat_g\": 3.6,\n  \"fiber_g\": 0.0,\n  \"sugar_g\": 0.0,\n  \"sodium_mg\": 74,\n  \"consumed_at\": \"2025-09-02T12:30:00Z\",\n  \"notes\": \"Healthy lean protein for lunch\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/food-log",
+              "host": ["{{base_url}}"],
+              "path": ["food-log"]
+            },
+            "description": "Create a new food log entry"
+          }
+        },
+        {
+          "name": "Get All Food Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["food-log"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page"
+                },
+                {
+                  "key": "date_from",
+                  "value": "2025-09-01T00:00:00",
+                  "disabled": true,
+                  "description": "Start date filter"
+                },
+                {
+                  "key": "date_to",
+                  "value": "2025-09-03T23:59:59",
+                  "disabled": true,
+                  "description": "End date filter"
+                },
+                {
+                  "key": "meal_type",
+                  "value": "lunch",
+                  "disabled": true,
+                  "description": "Filter by meal type"
+                }
+              ]
+            },
+            "description": "Get all food log entries with optional filters"
+          }
+        },
+        {
+          "name": "Get Food Log by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/{{food_log_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "{{food_log_id}}"]
+            },
+            "description": "Get a specific food log entry by ID"
+          }
+        },
+        {
+          "name": "Update Food Log",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serving_size\": 200,\n  \"calories_per_serving\": 220,\n  \"protein_g\": 41.3,\n  \"notes\": \"Updated serving size to 200g for better macro tracking\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/food-log/{{food_log_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "{{food_log_id}}"]
+            },
+            "description": "Update an existing food log entry"
+          }
+        },
+        {
+          "name": "Delete Food Log",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/{{food_log_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "{{food_log_id}}"]
+            },
+            "description": "Delete a food log entry"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 Food Log - Analytics & Stats",
+      "item": [
+        {
+          "name": "Get Food Log Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/stats?date=2025-09-02",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "stats"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2025-09-02",
+                  "description": "Date for stats (optional)"
+                }
+              ]
+            },
+            "description": "Get food log statistics for analysis"
+          }
+        },
+        {
+          "name": "Get Food Log Trends",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/trends?days=7",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "trends"],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "7",
+                  "description": "Number of days for trend analysis"
+                }
+              ]
+            },
+            "description": "Get food log trends over time"
+          }
+        },
+        {
+          "name": "Get Nutrition Analysis",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/nutrition-analysis?date=2025-09-02",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "nutrition-analysis"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2025-09-02",
+                  "description": "Date for analysis"
+                }
+              ]
+            },
+            "description": "Get AI-powered nutrition analysis"
+          }
+        },
+        {
+          "name": "Get Food Recommendations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/recommendations",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "recommendations"]
+            },
+            "description": "Get AI-powered food recommendations"
+          }
+        },
+        {
+          "name": "Get Calories Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/calories/summary?startDate=2025-09-01&endDate=2025-09-07",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "calories", "summary"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2025-09-01",
+                  "description": "Start date for summary"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2025-09-07",
+                  "description": "End date for summary"
+                }
+              ]
+            },
+            "description": "Get calories summary for date range"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎯 Food Log - Dashboard & Summary",
+      "item": [
+        {
+          "name": "Get Food Log Summary (Day)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/summary?period=day&startDate=2025-09-02&endDate=2025-09-02",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "summary"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "day",
+                  "description": "Summary period (day/week/month)"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2025-09-02",
+                  "description": "Start date"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2025-09-02",
+                  "description": "End date"
+                }
+              ]
+            },
+            "description": "Get comprehensive food log summary for dashboard (daily)"
+          }
+        },
+        {
+          "name": "Get Food Log Summary (Week)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/summary?period=week",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "summary"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "week",
+                  "description": "Summary period (day/week/month)"
+                }
+              ]
+            },
+            "description": "Get comprehensive food log summary for dashboard (weekly)"
+          }
+        },
+        {
+          "name": "Get Food Log Summary (Month)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/summary?period=month",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "summary"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "month",
+                  "description": "Summary period (day/week/month)"
+                }
+              ]
+            },
+            "description": "Get comprehensive food log summary for dashboard (monthly)"
+          }
+        },
+        {
+          "name": "Get Dashboard Data",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "dashboard"]
+            },
+            "description": "Get complete dashboard data including today's nutrition, trends, health metrics, goals, and insights"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔍 Food Log - Specialized Queries",
+      "item": [
+        {
+          "name": "Get Food Logs by Meal Type (Breakfast)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/meal-types/breakfast?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "meal-types", "breakfast"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "date_from",
+                  "value": "2025-09-01T00:00:00",
+                  "disabled": true
+                },
+                {
+                  "key": "date_to",
+                  "value": "2025-09-07T23:59:59",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get food logs filtered by meal type (breakfast)"
+          }
+        },
+        {
+          "name": "Get Food Logs by Meal Type (Lunch)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/meal-types/lunch?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "meal-types", "lunch"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get food logs filtered by meal type (lunch)"
+          }
+        },
+        {
+          "name": "Get Food Logs by Meal Type (Dinner)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/meal-types/dinner?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "meal-types", "dinner"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get food logs filtered by meal type (dinner)"
+          }
+        },
+        {
+          "name": "Get Food Logs by Meal Type (Snack)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-log/meal-types/snack?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["food-log", "meal-types", "snack"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get food logs filtered by meal type (snack)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📝 Sample Food Log Entries",
+      "item": [
+        {
+          "name": "Create Breakfast Entry",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"food_name\": \"Oatmeal with Blueberries\",\n  \"meal_type\": \"breakfast\",\n  \"serving_size\": 1,\n  \"serving_unit\": \"bowl\",\n  \"calories_per_serving\": 320,\n  \"protein_g\": 12.0,\n  \"carbs_g\": 58.0,\n  \"fat_g\": 6.5,\n  \"fiber_g\": 8.2,\n  \"sugar_g\": 18.5,\n  \"sodium_mg\": 95,\n  \"consumed_at\": \"2025-09-02T07:30:00Z\",\n  \"notes\": \"Healthy breakfast with fresh blueberries and a dash of honey\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/food-log",
+              "host": ["{{base_url}}"],
+              "path": ["food-log"]
+            }
+          }
+        },
+        {
+          "name": "Create Lunch Entry",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"food_name\": \"Caesar Salad with Grilled Chicken\",\n  \"meal_type\": \"lunch\",\n  \"serving_size\": 1,\n  \"serving_unit\": \"large plate\",\n  \"calories_per_serving\": 425,\n  \"protein_g\": 35.0,\n  \"carbs_g\": 12.0,\n  \"fat_g\": 28.0,\n  \"fiber_g\": 4.5,\n  \"sugar_g\": 6.0,\n  \"sodium_mg\": 1200,\n  \"consumed_at\": \"2025-09-02T12:45:00Z\",\n  \"notes\": \"Restaurant lunch with extra chicken, light dressing\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/food-log",
+              "host": ["{{base_url}}"],
+              "path": ["food-log"]
+            }
+          }
+        },
+        {
+          "name": "Create Dinner Entry",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"food_name\": \"Baked Salmon with Quinoa and Broccoli\",\n  \"meal_type\": \"dinner\",\n  \"serving_size\": 1,\n  \"serving_unit\": \"plate\",\n  \"calories_per_serving\": 545,\n  \"protein_g\": 42.0,\n  \"carbs_g\": 35.0,\n  \"fat_g\": 25.0,\n  \"fiber_g\": 7.8,\n  \"sugar_g\": 4.2,\n  \"sodium_mg\": 320,\n  \"consumed_at\": \"2025-09-02T19:15:00Z\",\n  \"notes\": \"Home-cooked healthy dinner with omega-3 rich salmon\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/food-log",
+              "host": ["{{base_url}}"],
+              "path": ["food-log"]
+            }
+          }
+        },
+        {
+          "name": "Create Snack Entry",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"food_name\": \"Greek Yogurt with Almonds\",\n  \"meal_type\": \"snack\",\n  \"serving_size\": 150,\n  \"serving_unit\": \"grams\",\n  \"calories_per_serving\": 180,\n  \"protein_g\": 15.0,\n  \"carbs_g\": 8.0,\n  \"fat_g\": 10.0,\n  \"fiber_g\": 2.5,\n  \"sugar_g\": 6.0,\n  \"sodium_mg\": 60,\n  \"consumed_at\": \"2025-09-02T15:30:00Z\",\n  \"notes\": \"Healthy afternoon snack for sustained energy\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/food-log",
+              "host": ["{{base_url}}"],
+              "path": ["food-log"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-set current date for date parameters",
+          "const currentDate = new Date().toISOString().split('T')[0];",
+          "pm.globals.set('current_date', currentDate);",
+          "",
+          "// Auto-set current datetime for consumed_at",
+          "const currentDateTime = new Date().toISOString();",
+          "pm.globals.set('current_datetime', currentDateTime);"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test script for all requests",
+          "pm.test('Response time is less than 2000ms', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+          "});",
+          "",
+          "pm.test('Response has proper JSON structure', function () {",
+          "    pm.response.to.have.jsonBody();",
+          "    const response = pm.response.json();",
+          "    pm.expect(response).to.have.property('success');",
+          "    pm.expect(response).to.have.property('message');",
+          "});"
+        ]
+      }
+    }
+  ]
+}

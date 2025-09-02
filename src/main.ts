@@ -37,7 +37,7 @@ async function bootstrap() {
   // Remove global prefix to keep original routes
   // app.setGlobalPrefix('api');
 
-  const port = process.env.PORT || 3000;
+  const port = process.env.PORT || 8080;
   await app.listen(port);
 
   logger.log(`Application is running on: http://localhost:${port}`);

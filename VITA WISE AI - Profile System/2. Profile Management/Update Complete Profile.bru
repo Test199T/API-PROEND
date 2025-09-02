@@ -1,0 +1,69 @@
+meta {
+  name: Update Complete Profile
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{baseUrl}}/users/profile
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "first_name": "Postman Complete",
+    "last_name": "Test User",
+    "date_of_birth": "1990-05-15",
+    "gender": "male",
+    "height_cm": 175,
+    "weight_kg": 70,
+    "activity_level": "moderately_active",
+    "health_data": {
+      "waist_circumference_cm": 80,
+      "blood_pressure_systolic": 120,
+      "blood_pressure_diastolic": 80,
+      "blood_sugar_mg_dl": 90
+    },
+    "health_goals": {
+      "main_goal": "ลดน้ำหนัก",
+      "goal_duration": "3 เดือน",
+      "motivation": "เพื่อสุขภาพที่ดีขึ้น",
+      "target_weight_kg": 65,
+      "target_sleep_hours": 8,
+      "target_exercise_minutes_per_day": 60
+    },
+    "nutrition_goals": {
+      "target_calories_per_day": 1800,
+      "target_protein_grams_per_day": 100,
+      "target_carbs_grams_per_day": 200,
+      "target_fat_grams_per_day": 60,
+      "dietary_restrictions": ["ไม่กินหมู", "ลดน้ำตาล"]
+    },
+    "daily_behavior": {
+      "exercise_frequency_per_week": 5,
+      "average_sleep_hours_per_day": 7,
+      "meals_per_day": 3,
+      "alcohol_consumption": "occasionally",
+      "smoking_status": "never"
+    },
+    "medical_history": {
+      "chronic_conditions": [],
+      "allergies": ["ไข่", "ถั่วลิสง"],
+      "medications": [],
+      "family_medical_history": "พ่อแม่เป็นเบาหวาน"
+    }
+  }
+}
+
+settings {
+  encodeUrl: true
+}

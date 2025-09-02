@@ -1,0 +1,39 @@
+meta {
+  name: Register User
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/auth/register
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{user_email}}",
+    "password": "{{user_password}}",
+    "firstName": "Postman",
+    "lastName": "Test"
+  }
+}
+
+script:post-response {
+  test('Status code is 200 or 201', function () {
+      expect(res.getStatus()).to.be.oneOf([200, 201]);
+  });
+  
+  test('Response has user data', function () {
+      const responseJson = res.getBody();
+      expect(responseJson).to.have.property('user');
+  });
+}
+
+settings {
+  encodeUrl: true
+}

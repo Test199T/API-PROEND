@@ -9,6 +9,7 @@ import { DashboardService } from './services/dashboard.service';
 import { ChatService } from './services/chat.service';
 import { UserService } from './services/user.service';
 import { HealthGoalService } from './services/health-goal.service';
+import { FoodLogService } from './services/food-log.service';
 import { OpenRouterService } from './services/openrouter.service';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
@@ -60,6 +61,7 @@ import { HealthController } from './controllers/health.controller';
     ChatService,
     UserService,
     HealthGoalService,
+    FoodLogService,
     OpenRouterService,
     HttpExceptionFilter,
   ],

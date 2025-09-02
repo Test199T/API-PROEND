@@ -1,0 +1,68 @@
+# VITA WISE AI - Food Log Summary API Testing
+# ทดสอบ API endpoints สำหรับ food log summary
+
+### 1. Login เพื่อดึง JWT Token
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "password123"
+}
+
+### 2. ทดสอบ Food Log Summary - Day Period with Custom Dates
+# {{base_url}}/food-log/summary?period=day&startDate=2025-09-02&endDate=2025-09-02
+GET http://localhost:3000/food-log/summary?period=day&startDate=2025-09-02&endDate=2025-09-02
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 3. ทดสอบ Food Log Summary - Week Period (Default)
+# {{base_url}}/food-log/summary?period=week
+GET http://localhost:3000/food-log/summary?period=week
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 4. ทดสอบ Food Log Summary - Month Period
+# {{base_url}}/food-log/summary?period=month
+GET http://localhost:3000/food-log/summary?period=month
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 5. ทดสอบ Food Log Summary - Day Period (Current Day)
+GET http://localhost:3000/food-log/summary?period=day
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 6. ทดสอบ Food Log Summary - Custom Date Range
+GET http://localhost:3000/food-log/summary?startDate=2025-09-01&endDate=2025-09-07
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 7. ทดสอบ Food Log Summary - No Parameters (Default Week)
+GET http://localhost:3000/food-log/summary
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+###
+# คำแนะนำการใช้งาน:
+# 1. รัน login request ก่อนเพื่อดึง JWT token
+# 2. คัดลอก access_token จาก response
+# 3. แทนที่ YOUR_JWT_TOKEN_HERE ด้วย token ที่ได้
+# 4. รันแต่ละ request เพื่อทดสอบ endpoint
+#
+# Expected Response Structure:
+# {
+#   "success": true,
+#   "data": {
+#     "period": "day|week|month",
+#     "start_date": "2025-09-02",
+#     "end_date": "2025-09-02",
+#     "nutrition_summary": {
+#       "total_calories": 0,
+#       "total_protein": 0,
+#       "total_carbs": 0,
+#       "total_fat": 0,
+#       "meal_count": 0,
+#       "days_logged": 1
+#     },
+#     "daily_averages": {...},
+#     "daily_breakdown": [...],
+#     "weight_trend": {...},
+#     "goal_progress": [...],
+#     "insights": {...}
+#   }
+# }

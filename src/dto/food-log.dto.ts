@@ -7,6 +7,8 @@ import {
   Min,
   Max,
   IsArray,
+  ValidateIf,
+  IsNotEmpty,
 } from 'class-validator';
 import { MealType } from '../entities/food-log.entity';
 
@@ -21,14 +23,39 @@ export class CreateFoodLogDto {
   @IsString()
   food_name: string;
 
+  // Support both old and new field names for backward compatibility
+  @ValidateIf(o => !o.serving_size)
+  @IsNotEmpty({ message: 'Either quantity or serving_size is required' })
   @IsNumber()
   @Min(0.01)
   @Max(1000)
-  quantity: number;
+  quantity?: number;
 
+  @ValidateIf(o => !o.serving_unit)
+  @IsNotEmpty({ message: 'Either unit or serving_unit is required' })
   @IsString()
-  unit: string;
+  unit?: string;
 
+  // Legacy field names (for backward compatibility)
+  @ValidateIf(o => !o.quantity)
+  @IsNotEmpty({ message: 'Either serving_size or quantity is required' })
+  @IsNumber()
+  @Min(0.01)
+  @Max(1000)
+  serving_size?: number;
+
+  @ValidateIf(o => !o.unit)
+  @IsNotEmpty({ message: 'Either serving_unit or unit is required' })
+  @IsString()
+  serving_unit?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(10000)
+  calories_per_serving?: number;
+
+  @ValidateIf(o => !o.calories_per_serving)
   @IsOptional()
   @IsNumber()
   @Min(0)
@@ -88,16 +115,39 @@ export class UpdateFoodLogDto {
   @IsString()
   food_name?: string;
 
+  // Support both old and new field names for backward compatibility
+  @ValidateIf(o => !o.serving_size)
   @IsOptional()
   @IsNumber()
   @Min(0.01)
   @Max(1000)
   quantity?: number;
 
+  @ValidateIf(o => !o.serving_unit)
   @IsOptional()
   @IsString()
   unit?: string;
 
+  // Legacy field names (for backward compatibility)
+  @ValidateIf(o => !o.quantity)
+  @IsOptional()
+  @IsNumber()
+  @Min(0.01)
+  @Max(1000)
+  serving_size?: number;
+
+  @ValidateIf(o => !o.unit)
+  @IsOptional()
+  @IsString()
+  serving_unit?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(10000)
+  calories_per_serving?: number;
+
+  @ValidateIf(o => !o.calories_per_serving)
   @IsOptional()
   @IsNumber()
   @Min(0)
@@ -363,6 +413,14 @@ export class FoodLogQueryDto {
   end_date?: string;
 
   @IsOptional()
+  @IsString()
+  date_from?: string;
+
+  @IsOptional()
+  @IsString()
+  date_to?: string;
+
+  @IsOptional()
   @IsEnum(MealType)
   meal_type?: MealType;
 
@@ -376,6 +434,11 @@ export class FoodLogQueryDto {
   @IsNumber()
   @Min(0)
   offset?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  page?: number;
 }
 
 export class FoodLogRecommendationDto {

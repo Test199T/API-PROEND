@@ -1,0 +1,37 @@
+meta {
+  name: Get Complete Profile
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/users/profile/complete
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+script:post-response {
+  test('Status code is 200', function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test('Response has success true', function () {
+      const responseJson = res.getBody();
+      expect(responseJson.success).to.be.true;
+  });
+  
+  test('Response has user data', function () {
+      const responseJson = res.getBody();
+      expect(responseJson.data).to.have.property('id');
+      expect(responseJson.data).to.have.property('email');
+      expect(responseJson.data).to.have.property('first_name');
+  });
+}
+
+settings {
+  encodeUrl: true
+}

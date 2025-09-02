@@ -1,0 +1,46 @@
+meta {
+  name: Login User
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/auth/login
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{user_email}}",
+    "password": "{{user_password}}"
+  }
+}
+
+script:post-response {
+  test('Status code is 200', function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test('Response has access token', function () {
+      const responseJson = res.getBody();
+      expect(responseJson).to.have.property('access_token');
+      
+      // Save token for other requests
+      bru.setVar('access_token', responseJson.access_token);
+      bru.setGlobalEnvVar('access_token', responseJson.access_token);
+  });
+  
+  test('Token is not empty', function () {
+      const responseJson = res.getBody();
+      expect(responseJson.access_token).to.not.be.empty;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
