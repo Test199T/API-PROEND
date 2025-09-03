@@ -11,9 +11,10 @@ import {
   Request,
   HttpCode,
   HttpStatus,
+  ParseIntPipe,
+  DefaultValuePipe,
 } from '@nestjs/common';
-import { SupabaseService } from '../services/supabase.service';
-import { AIService } from '../services/ai.service';
+import { ExerciseLogService } from '../services/exercise-log.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { ResponseDto } from '../dto/common.dto';
 import {
@@ -27,8 +28,7 @@ import {
 @UseGuards(AuthGuard)
 export class ExerciseLogController {
   constructor(
-    private readonly supabaseService: SupabaseService,
-    private readonly aiService: AIService,
+    private readonly exerciseLogService: ExerciseLogService,
   ) {}
 
   @Post()
@@ -38,20 +38,20 @@ export class ExerciseLogController {
     @Request() req: any,
   ): Promise<ResponseDto<ExerciseLogResponseDto>> {
     try {
-      const exerciseLog = await this.supabaseService.createExerciseLog({
-        ...createExerciseLogDto,
-        user_id: req.user.id,
-      });
+      const exerciseLog = await this.exerciseLogService.createExerciseLog(
+        createExerciseLogDto,
+        req.user.id,
+      );
 
       return ResponseDto.success(
         exerciseLog,
-        'Exercise log created successfully',
+        'สร้าง exercise log สำเร็จ',
       );
     } catch (error) {
-      return ResponseDto.success(
-        {} as ExerciseLogResponseDto,
-        'Failed to create exercise log',
-      );
+      if (error.status === 400) {
+        return ResponseDto.error(error.message);
+      }
+      return ResponseDto.error('ข้อผิดพลาดภายในเซิร์ฟเวอร์');
     }
   }
 
@@ -59,20 +59,24 @@ export class ExerciseLogController {
   async getExerciseLogs(
     @Query() query: ExerciseLogQueryDto,
     @Request() req: any,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
   ): Promise<ResponseDto<ExerciseLogResponseDto[]>> {
     try {
-      const userId = req.user.id;
-      const exerciseLogs = await this.supabaseService.getExerciseLogs(
-        userId,
-        query,
+      const exerciseLogs = await this.exerciseLogService.getExerciseLogs(
+        req.user.id,
+        { ...query, page, limit },
       );
 
       return ResponseDto.success(
         exerciseLogs,
-        'Exercise logs retrieved successfully',
+        'ดึงข้อมูล exercise logs สำเร็จ',
       );
     } catch (error) {
-      return ResponseDto.success([], 'Failed to retrieve exercise logs');
+      if (error.status === 400) {
+        return ResponseDto.error(error.message);
+      }
+      return ResponseDto.error('ข้อผิดพลาดภายในเซิร์ฟเวอร์');
     }
   }
 
@@ -82,39 +86,43 @@ export class ExerciseLogController {
     @Query('date') date?: string,
   ): Promise<ResponseDto<any>> {
     try {
-      const userId = req.user.id;
-      const stats = await this.supabaseService.getExerciseLogStats(
-        userId,
+      const stats = await this.exerciseLogService.getExerciseLogStats(
+        req.user.id,
         date,
       );
 
       return ResponseDto.success(
         stats,
-        'Exercise log stats retrieved successfully',
+        'ดึงสถิติ exercise log สำเร็จ',
       );
     } catch (error) {
-      return ResponseDto.success({}, 'Failed to retrieve exercise log stats');
+      if (error.status === 400) {
+        return ResponseDto.error(error.message);
+      }
+      return ResponseDto.error('ข้อผิดพลาดภายในเซิร์ฟเวอร์');
     }
   }
 
   @Get('trends')
   async getExerciseLogTrends(
     @Request() req: any,
-    @Query('days') days: number = 7,
+    @Query('days', new DefaultValuePipe(7), ParseIntPipe) days: number,
   ): Promise<ResponseDto<any>> {
     try {
-      const userId = req.user.id;
-      const trends = await this.supabaseService.getExerciseLogTrends(
-        userId,
+      const trends = await this.exerciseLogService.getExerciseLogTrends(
+        req.user.id,
         days,
       );
 
       return ResponseDto.success(
         trends,
-        'Exercise log trends retrieved successfully',
+        'ดึงแนวโน้ม exercise log สำเร็จ',
       );
     } catch (error) {
-      return ResponseDto.success({}, 'Failed to retrieve exercise log trends');
+      if (error.status === 400) {
+        return ResponseDto.error(error.message);
+      }
+      return ResponseDto.error('ข้อผิดพลาดภายในเซิร์ฟเวอร์');
     }
   }
 
@@ -124,15 +132,18 @@ export class ExerciseLogController {
     @Query('date') date?: string,
   ): Promise<ResponseDto<any>> {
     try {
-      const userId = req.user.id;
-      const analysis = await this.aiService.analyzeExercise(userId, date);
+      // TODO: Implement AI workout analysis
+      const analysis = {
+        message: 'AI workout analysis feature coming soon',
+        date: date || new Date().toISOString().split('T')[0],
+      };
 
       return ResponseDto.success(
         analysis,
-        'Workout analysis retrieved successfully',
+        'ดึงการวิเคราะห์ workout สำเร็จ',
       );
     } catch (error) {
-      return ResponseDto.success({}, 'Failed to retrieve workout analysis');
+      return ResponseDto.error('ข้อผิดพลาดภายในเซิร์ฟเวอร์');
     }
   }
 
@@ -141,19 +152,22 @@ export class ExerciseLogController {
     @Request() req: any,
   ): Promise<ResponseDto<any>> {
     try {
-      const userId = req.user.id;
-      const recommendations =
-        await this.aiService.getExerciseRecommendations(userId);
+      // TODO: Implement AI exercise recommendations
+      const recommendations = {
+        message: 'AI exercise recommendations feature coming soon',
+        suggestions: [
+          'ออกกำลังกายแบบ cardio 30 นาที',
+          'ฝึกความแข็งแรง 20 นาที',
+          'ยืดกล้ามเนื้อ 10 นาที',
+        ],
+      };
 
       return ResponseDto.success(
         recommendations,
-        'Exercise recommendations retrieved successfully',
+        'ดึงคำแนะนำการออกกำลังกายสำเร็จ',
       );
     } catch (error) {
-      return ResponseDto.success(
-        {},
-        'Failed to retrieve exercise recommendations',
-      );
+      return ResponseDto.error('ข้อผิดพลาดภายในเซิร์ฟเวอร์');
     }
   }
 
@@ -163,25 +177,23 @@ export class ExerciseLogController {
     @Request() req: any,
   ): Promise<ResponseDto<ExerciseLogResponseDto>> {
     try {
-      const userId = req.user.id;
-      const exerciseLog = await this.supabaseService.getExerciseLog(id, userId);
-
-      if (!exerciseLog) {
-        return ResponseDto.success(
-          {} as ExerciseLogResponseDto,
-          'Exercise log not found',
-        );
-      }
+      const exerciseLog = await this.exerciseLogService.getExerciseLog(id, req.user.id);
 
       return ResponseDto.success(
         exerciseLog,
-        'Exercise log retrieved successfully',
+        'ดึงข้อมูล exercise log สำเร็จ',
       );
     } catch (error) {
-      return ResponseDto.success(
-        {} as ExerciseLogResponseDto,
-        'Failed to retrieve exercise log',
-      );
+      if (error.status === 404) {
+        return ResponseDto.error('ไม่พบข้อมูล exercise log');
+      }
+      if (error.status === 403) {
+        return ResponseDto.error('ไม่มีสิทธิ์เข้าถึง');
+      }
+      if (error.status === 400) {
+        return ResponseDto.error(error.message);
+      }
+      return ResponseDto.error('ข้อผิดพลาดภายในเซิร์ฟเวอร์');
     }
   }
 
@@ -192,29 +204,27 @@ export class ExerciseLogController {
     @Request() req: any,
   ): Promise<ResponseDto<ExerciseLogResponseDto>> {
     try {
-      const userId = req.user.id;
-      const exerciseLog = await this.supabaseService.updateExerciseLog(
+      const exerciseLog = await this.exerciseLogService.updateExerciseLog(
         id,
-        userId,
+        req.user.id,
         updateExerciseLogDto,
       );
 
-      if (!exerciseLog) {
-        return ResponseDto.success(
-          {} as ExerciseLogResponseDto,
-          'Exercise log not found',
-        );
-      }
-
       return ResponseDto.success(
         exerciseLog,
-        'Exercise log updated successfully',
+        'อัปเดต exercise log สำเร็จ',
       );
     } catch (error) {
-      return ResponseDto.success(
-        {} as ExerciseLogResponseDto,
-        'Failed to update exercise log',
-      );
+      if (error.status === 404) {
+        return ResponseDto.error('ไม่พบข้อมูล exercise log');
+      }
+      if (error.status === 403) {
+        return ResponseDto.error('ไม่มีสิทธิ์เข้าถึง');
+      }
+      if (error.status === 400) {
+        return ResponseDto.error(error.message);
+      }
+      return ResponseDto.error('ข้อผิดพลาดภายในเซิร์ฟเวอร์');
     }
   }
 
@@ -225,19 +235,23 @@ export class ExerciseLogController {
     @Request() req: any,
   ): Promise<ResponseDto<void>> {
     try {
-      const userId = req.user.id;
-      const deleted = await this.supabaseService.deleteExerciseLog(id, userId);
-
-      if (!deleted) {
-        return ResponseDto.success(undefined, 'Exercise log not found');
-      }
+      await this.exerciseLogService.deleteExerciseLog(id, req.user.id);
 
       return ResponseDto.success(
         undefined,
-        'Exercise log deleted successfully',
+        'ลบ exercise log สำเร็จ',
       );
     } catch (error) {
-      return ResponseDto.success(undefined, 'Failed to delete exercise log');
+      if (error.status === 404) {
+        return ResponseDto.error('ไม่พบข้อมูล exercise log');
+      }
+      if (error.status === 403) {
+        return ResponseDto.error('ไม่มีสิทธิ์เข้าถึง');
+      }
+      if (error.status === 400) {
+        return ResponseDto.error(error.message);
+      }
+      return ResponseDto.error('ข้อผิดพลาดภายในเซิร์ฟเวอร์');
     }
   }
 
@@ -246,24 +260,25 @@ export class ExerciseLogController {
     @Param('exerciseType') exerciseType: string,
     @Query() query: ExerciseLogQueryDto,
     @Request() req: any,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
   ): Promise<ResponseDto<ExerciseLogResponseDto[]>> {
     try {
-      const userId = req.user.id;
-      const exerciseLogs = await this.supabaseService.getExerciseLogsByType(
-        userId,
+      const exerciseLogs = await this.exerciseLogService.getExerciseLogsByType(
+        req.user.id,
         exerciseType,
-        query,
+        { ...query, page, limit },
       );
 
       return ResponseDto.success(
         exerciseLogs,
-        'Exercise logs by type retrieved successfully',
+        'ดึงข้อมูล exercise logs ตามประเภทสำเร็จ',
       );
     } catch (error) {
-      return ResponseDto.success(
-        [],
-        'Failed to retrieve exercise logs by type',
-      );
+      if (error.status === 400) {
+        return ResponseDto.error(error.message);
+      }
+      return ResponseDto.error('ข้อผิดพลาดภายในเซิร์ฟเวอร์');
     }
   }
 
@@ -274,22 +289,21 @@ export class ExerciseLogController {
     @Query('endDate') endDate?: string,
   ): Promise<ResponseDto<any>> {
     try {
-      const userId = req.user.id;
-      const summary = await this.supabaseService.getCaloriesBurnedSummary(
-        userId,
+      const summary = await this.exerciseLogService.getCaloriesBurnedSummary(
+        req.user.id,
         startDate,
         endDate,
       );
 
       return ResponseDto.success(
         summary,
-        'Calories burned summary retrieved successfully',
+        'ดึงสรุปแคลอรี่ที่เผาผลาญสำเร็จ',
       );
     } catch (error) {
-      return ResponseDto.success(
-        {},
-        'Failed to retrieve calories burned summary',
-      );
+      if (error.status === 400) {
+        return ResponseDto.error(error.message);
+      }
+      return ResponseDto.error('ข้อผิดพลาดภายในเซิร์ฟเวอร์');
     }
   }
 
@@ -298,19 +312,17 @@ export class ExerciseLogController {
     @Request() req: any,
   ): Promise<ResponseDto<any>> {
     try {
-      const userId = req.user.id;
-      const streak =
-        await this.supabaseService.getCurrentExerciseStreak(userId);
+      const streak = await this.exerciseLogService.getCurrentExerciseStreak(req.user.id);
 
       return ResponseDto.success(
         streak,
-        'Current exercise streak retrieved successfully',
+        'ดึงข้อมูล exercise streak ปัจจุบันสำเร็จ',
       );
     } catch (error) {
-      return ResponseDto.success(
-        {},
-        'Failed to retrieve current exercise streak',
-      );
+      if (error.status === 400) {
+        return ResponseDto.error(error.message);
+      }
+      return ResponseDto.error('ข้อผิดพลาดภายในเซิร์ฟเวอร์');
     }
   }
 }

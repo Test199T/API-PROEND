@@ -1,0 +1,675 @@
+{
+  "info": {
+    "name": "Exercise Log API Collection",
+    "description": "Collection สำหรับทดสอบ Exercise Log API endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{auth_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "เข้าสู่ระบบเพื่อรับ JWT token"
+          },
+          "response": []
+        },
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\",\n  \"first_name\": \"Test\",\n  \"last_name\": \"User\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "ลงทะเบียนผู้ใช้ใหม่"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Exercise Log CRUD Operations",
+      "item": [
+        {
+          "name": "Create Exercise Log",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exercise_name\": \"Running\",\n  \"exercise_type\": \"cardio\",\n  \"duration_minutes\": 30,\n  \"sets\": null,\n  \"reps\": null,\n  \"weight_kg\": null,\n  \"distance_km\": 5.0,\n  \"calories_burned\": 300,\n  \"intensity\": \"moderate\",\n  \"notes\": \"Morning run\",\n  \"exercise_date\": \"2024-01-15\",\n  \"exercise_time\": \"07:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/exercise-log",
+              "host": ["{{base_url}}"],
+              "path": ["exercise-log"]
+            },
+            "description": "สร้าง exercise log ใหม่"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Strength Training Log",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exercise_name\": \"Bench Press\",\n  \"exercise_type\": \"strength\",\n  \"duration_minutes\": null,\n  \"sets\": 3,\n  \"reps\": 10,\n  \"weight_kg\": 60.0,\n  \"distance_km\": null,\n  \"calories_burned\": 120,\n  \"intensity\": \"high\",\n  \"notes\": \"Chest workout\",\n  \"exercise_date\": \"2024-01-15\",\n  \"exercise_time\": \"18:30:00\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/exercise-log",
+              "host": ["{{base_url}}"],
+              "path": ["exercise-log"]
+            },
+            "description": "สร้าง strength training log"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Exercise Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/exercise-log?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["exercise-log"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "ดึงข้อมูล exercise logs ทั้งหมดพร้อม pagination"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Exercise Logs with Filters",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/exercise-log?exercise_type=cardio&intensity=moderate&exercise_date_from=2024-01-01&exercise_date_to=2024-01-31&page=1&limit=5",
+              "host": ["{{base_url}}"],
+              "path": ["exercise-log"],
+              "query": [
+                {
+                  "key": "exercise_type",
+                  "value": "cardio"
+                },
+                {
+                  "key": "intensity",
+                  "value": "moderate"
+                },
+                {
+                  "key": "exercise_date_from",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "exercise_date_to",
+                  "value": "2024-01-31"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            },
+            "description": "ดึงข้อมูล exercise logs พร้อม filters และ pagination"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Exercise Log by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/exercise-log/1",
+              "host": ["{{base_url}}"],
+              "path": ["exercise-log", "1"]
+            },
+            "description": "ดึงข้อมูล exercise log ตาม ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Exercise Log",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"duration_minutes\": 35,\n  \"distance_km\": 5.5,\n  \"calories_burned\": 330,\n  \"notes\": \"Morning run - updated distance\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/exercise-log/1",
+              "host": ["{{base_url}}"],
+              "path": ["exercise-log", "1"]
+            },
+            "description": "อัปเดตข้อมูล exercise log"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Exercise Log",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/exercise-log/1",
+              "host": ["{{base_url}}"],
+              "path": ["exercise-log", "1"]
+            },
+            "description": "ลบข้อมูล exercise log"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Exercise Log Queries and Filters",
+      "item": [
+        {
+          "name": "Get Exercise Logs by Type",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/exercise-log/types/cardio?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["exercise-log", "types", "cardio"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "ดึงข้อมูล exercise logs ตามประเภท"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Exercise Logs by Intensity",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/exercise-log?intensity=high&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["exercise-log"],
+              "query": [
+                {
+                  "key": "intensity",
+                  "value": "high"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "ดึงข้อมูล exercise logs ตามความเข้มข้น"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Exercise Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/exercise-log?search=running&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["exercise-log"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "running"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "ค้นหา exercise logs ตามคำค้นหา"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Exercise Log Statistics and Analytics",
+      "item": [
+        {
+          "name": "Get Exercise Log Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/exercise-log/stats?date=2024-01-15",
+              "host": ["{{base_url}}"],
+              "path": ["exercise-log", "stats"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2024-01-15"
+                }
+              ]
+            },
+            "description": "ดึงสถิติ exercise log สำหรับวันที่ระบุ"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Exercise Log Trends",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/exercise-log/trends?days=7",
+              "host": ["{{base_url}}"],
+              "path": ["exercise-log", "trends"],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "7"
+                }
+              ]
+            },
+            "description": "ดึงแนวโน้ม exercise log สำหรับจำนวนวันที่ระบุ"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Calories Burned Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/exercise-log/calories/summary?startDate=2024-01-01&endDate=2024-01-31",
+              "host": ["{{base_url}}"],
+              "path": ["exercise-log", "calories", "summary"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-01-31"
+                }
+              ]
+            },
+            "description": "ดึงสรุปแคลอรี่ที่เผาผลาญในช่วงวันที่ระบุ"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current Exercise Streak",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/exercise-log/streak/current",
+              "host": ["{{base_url}}"],
+              "path": ["exercise-log", "streak", "current"]
+            },
+            "description": "ดึงข้อมูล exercise streak ปัจจุบัน"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. AI and Recommendations",
+      "item": [
+        {
+          "name": "Get Workout Analysis",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/exercise-log/workout-analysis?date=2024-01-15",
+              "host": ["{{base_url}}"],
+              "path": ["exercise-log", "workout-analysis"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2024-01-15"
+                }
+              ]
+            },
+            "description": "ดึงการวิเคราะห์ workout จาก AI"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Exercise Recommendations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/exercise-log/recommendations",
+              "host": ["{{base_url}}"],
+              "path": ["exercise-log", "recommendations"]
+            },
+            "description": "ดึงคำแนะนำการออกกำลังกายจาก AI"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. Error Testing",
+      "item": [
+        {
+          "name": "Create Invalid Exercise Log - Wrong Type",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exercise_name\": \"Invalid Exercise\",\n  \"exercise_type\": \"invalid_type\",\n  \"duration_minutes\": 30,\n  \"exercise_date\": \"2024-01-15\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/exercise-log",
+              "host": ["{{base_url}}"],
+              "path": ["exercise-log"]
+            },
+            "description": "ทดสอบการสร้าง exercise log ด้วย exercise_type ที่ไม่ถูกต้อง"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Invalid Exercise Log - Negative Duration",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exercise_name\": \"Invalid Exercise\",\n  \"exercise_type\": \"cardio\",\n  \"duration_minutes\": -10,\n  \"exercise_date\": \"2024-01-15\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/exercise-log",
+              "host": ["{{base_url}}"],
+              "path": ["exercise-log"]
+            },
+            "description": "ทดสอบการสร้าง exercise log ด้วย duration_minutes ที่เป็นลบ"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Invalid Exercise Log - Wrong Date Format",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exercise_name\": \"Invalid Exercise\",\n  \"exercise_type\": \"cardio\",\n  \"duration_minutes\": 30,\n  \"exercise_date\": \"15-01-2024\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/exercise-log",
+              "host": ["{{base_url}}"],
+              "path": ["exercise-log"]
+            },
+            "description": "ทดสอบการสร้าง exercise log ด้วยรูปแบบวันที่ที่ไม่ถูกต้อง"
+          },
+          "response": []
+        },
+        {
+          "name": "Access Without Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/exercise-log",
+              "host": ["{{base_url}}"],
+              "path": ["exercise-log"]
+            },
+            "description": "ทดสอบการเข้าถึง API โดยไม่มี JWT token"
+          },
+          "response": []
+        },
+        {
+          "name": "Access Other User's Exercise Log",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/exercise-log/999",
+              "host": ["{{base_url}}"],
+              "path": ["exercise-log", "999"]
+            },
+            "description": "ทดสอบการเข้าถึง exercise log ของผู้ใช้อื่น"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "exec": [
+          "// Test script สำหรับตรวจสอบ response",
+          "pm.test(\"Status code is 200\", function () {",
+          "    pm.response.to.have.status(200);",
+          "});",
+          "",
+          "pm.test(\"Response has data property\", function () {",
+          "    var jsonData = pm.response.json();",
+          "    pm.expect(jsonData).to.have.property('data');",
+          "});",
+          "",
+          "pm.test(\"Response has message property\", function () {",
+          "    var jsonData = pm.response.json();",
+          "    pm.expect(jsonData).to.have.property('message');",
+          "});"
+        ],
+        "type": "text/javascript"
+      }
+    }
+  ]
+}
