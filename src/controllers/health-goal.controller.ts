@@ -33,7 +33,6 @@ import {
   HealthGoalSearchDto,
   HealthGoalProgressDto,
   HealthGoalStatsDto,
-  HealthGoalBulkUpdateDto,
   HealthGoalTemplateDto,
   HealthGoalRecommendationDto,
 } from '../dto/health-goal.dto';
@@ -44,17 +43,214 @@ import { User } from '../auth/decorators/user.decorator';
 @ApiTags('Health Goals - จัดการเป้าหมายสุขภาพ')
 @Controller('health-goals')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(AuthGuard)
-@ApiBearerAuth()
 export class HealthGoalController {
   constructor(private readonly healthGoalService: HealthGoalService) {}
 
   // =====================================================
-  // CRUD OPERATIONS
+  // PUBLIC ENDPOINTS FOR TESTING
+  // =====================================================
+
+  @Get('test/public')
+  @ApiOperation({
+    summary: 'ทดสอบ API (ไม่ต้องการ authentication)',
+    description: 'Endpoint สำหรับทดสอบว่า API ทำงานได้หรือไม่',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'API ทำงานได้ปกติ',
+  })
+  async testPublicEndpoint(): Promise<ResponseDto<{ message: string; timestamp: string; status: string }>> {
+    return ResponseDto.success({
+      message: 'Health Goals API ทำงานได้ปกติ!',
+      timestamp: new Date().toISOString(),
+      status: 'active'
+    }, 'ทดสอบสำเร็จ');
+  }
+
+  @Get('test/health-check')
+  @ApiOperation({
+    summary: 'ตรวจสอบสถานะ API (ไม่ต้องการ authentication)',
+    description: 'ตรวจสอบสถานะและข้อมูลพื้นฐานของ API',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'ตรวจสอบสถานะสำเร็จ',
+  })
+  async healthCheck(): Promise<ResponseDto<any>> {
+    return ResponseDto.success({
+      service: 'Health Goals API',
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      version: '1.0.0',
+      endpoints: {
+        public: [
+          'GET /health-goals/test/public',
+          'GET /health-goals/test/health-check',
+          'GET /health-goals/test/sample-data',
+          'POST /health-goals/test/create-sample'
+        ],
+        protected: [
+          'GET /health-goals',
+          'POST /health-goals',
+          'GET /health-goals/:id',
+          'PUT /health-goals/:id',
+          'DELETE /health-goals/:id'
+        ]
+      },
+      note: 'Protected endpoints ต้องการ JWT token ใน Authorization header'
+    }, 'ตรวจสอบสถานะสำเร็จ');
+  }
+
+  @Get('test/sample-data')
+  @ApiOperation({
+    summary: 'ข้อมูลตัวอย่าง (ไม่ต้องการ authentication)',
+    description: 'ดึงข้อมูลตัวอย่างเป้าหมายสุขภาพสำหรับการทดสอบ',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'ดึงข้อมูลตัวอย่างสำเร็จ',
+  })
+  async getSampleData(): Promise<ResponseDto<any>> {
+    const sampleData = {
+      goals: [
+        {
+          id: 1,
+          goal_type: 'weight_loss',
+          title: 'ลดน้ำหนัก 5 กิโลกรัม',
+          description: 'ลดน้ำหนักเพื่อสุขภาพที่ดีขึ้น',
+          target_value: 5,
+          current_value: 2,
+          unit: 'kg',
+          start_date: '2024-01-01',
+          target_date: '2024-06-01',
+          priority: 'medium',
+          status: 'active',
+          progress_percentage: 40
+        },
+        {
+          id: 2,
+          goal_type: 'muscle_gain',
+          title: 'เพิ่มกล้ามเนื้อ',
+          description: 'สร้างกล้ามเนื้อให้แข็งแรง',
+          target_value: 10,
+          current_value: 3,
+          unit: 'kg',
+          start_date: '2024-01-01',
+          target_date: '2024-12-01',
+          priority: 'high',
+          status: 'active',
+          progress_percentage: 30
+        },
+        {
+          id: 3,
+          goal_type: 'nutrition',
+          title: 'กินผักผลไม้ให้ครบ 5 สี',
+          description: 'เพิ่มการกินผักผลไม้เพื่อสุขภาพที่ดี',
+          target_value: 5,
+          current_value: 4,
+          unit: 'สีต่อวัน',
+          start_date: '2024-01-01',
+          target_date: '2024-03-01',
+          priority: 'medium',
+          status: 'active',
+          progress_percentage: 80
+        }
+      ],
+              stats: {
+          total_goals: 3,
+          active_goals: 3,
+          completed_goals: 0,
+          average_progress: 50
+        }
+    };
+
+    return ResponseDto.success(sampleData, 'ดึงข้อมูลตัวอย่างสำเร็จ');
+  }
+
+  @Post('test/create-sample')
+  @ApiOperation({
+    summary: 'สร้างข้อมูลตัวอย่าง (ไม่ต้องการ authentication)',
+    description: 'สร้างข้อมูลตัวอย่างเป้าหมายสุขภาพสำหรับการทดสอบ',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'สร้างข้อมูลตัวอย่างสำเร็จ',
+  })
+  async createSampleData(): Promise<ResponseDto<any>> {
+    try {
+      // สร้างข้อมูลตัวอย่างใน memory (ไม่บันทึกลงฐานข้อมูล)
+      const sampleGoals = [
+        {
+          id: 1,
+          goal_type: 'weight_loss',
+          title: 'ลดน้ำหนัก 5 กิโลกรัม',
+          description: 'ลดน้ำหนักเพื่อสุขภาพที่ดีขึ้น',
+          target_value: 5,
+          current_value: 2,
+          unit: 'kg',
+          start_date: '2024-01-01',
+          target_date: '2024-06-01',
+          priority: 'medium',
+          status: 'active',
+          progress_percentage: 40,
+          user_id: 1,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: 2,
+          goal_type: 'muscle_gain',
+          title: 'เพิ่มกล้ามเนื้อ',
+          description: 'สร้างกล้ามเนื้อให้แข็งแรง',
+          target_value: 10,
+          current_value: 3,
+          unit: 'kg',
+          start_date: '2024-01-01',
+          target_date: '2024-12-01',
+          priority: 'high',
+          status: 'active',
+          progress_percentage: 30,
+          user_id: 1,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: 3,
+          goal_type: 'nutrition',
+          title: 'กินผักผลไม้ให้ครบ 5 สี',
+          description: 'เพิ่มการกินผักผลไม้เพื่อสุขภาพที่ดี',
+          target_value: 5,
+          current_value: 4,
+          unit: 'สีต่อวัน',
+          start_date: '2024-01-01',
+          target_date: '2024-03-01',
+          priority: 'medium',
+          status: 'active',
+          progress_percentage: 80,
+          user_id: 1,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ];
+
+      return ResponseDto.success({
+        message: 'สร้างข้อมูลตัวอย่างสำเร็จ',
+        goals: sampleGoals,
+        note: 'ข้อมูลนี้เป็นข้อมูลตัวอย่างใน memory ไม่ได้บันทึกลงฐานข้อมูลจริง'
+      }, 'สร้างข้อมูลตัวอย่างสำเร็จ');
+    } catch (error) {
+      return ResponseDto.error('เกิดข้อผิดพลาดในการสร้างข้อมูลตัวอย่าง');
+    }
+  }
+
+  // =====================================================
+  // PROTECTED ENDPOINTS (REQUIRE AUTHENTICATION)
   // =====================================================
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'สร้างเป้าหมายใหม่',
     description: 'สร้างเป้าหมายสุขภาพใหม่สำหรับผู้ใช้',
@@ -88,6 +284,8 @@ export class HealthGoalController {
   }
 
   @Get()
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'ดูรายการเป้าหมาย',
     description: 'ดึงรายการเป้าหมายสุขภาพของผู้ใช้พร้อมการค้นหาและแบ่งหน้า',
@@ -178,6 +376,8 @@ export class HealthGoalController {
   }
 
   @Get(':id')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'ดูข้อมูลเป้าหมาย',
     description: 'ดึงข้อมูลเป้าหมายสุขภาพตาม ID',
@@ -200,11 +400,17 @@ export class HealthGoalController {
       const goal = await this.healthGoalService.findHealthGoalById(id, userId);
       return ResponseDto.success(goal, 'ดึงข้อมูลเป้าหมายสำเร็จ');
     } catch (error) {
+      // ปรับปรุง error message ให้ชัดเจนขึ้น
+      if (error.message && error.message.includes('ไม่พบ')) {
+        return ResponseDto.error(`ไม่พบเป้าหมายที่มี ID: ${id}`);
+      }
       return ResponseDto.error(error.message);
     }
   }
 
   @Put(':id')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'อัพเดทเป้าหมาย',
     description: 'อัพเดทข้อมูลเป้าหมายสุขภาพ',
@@ -233,6 +439,8 @@ export class HealthGoalController {
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'ลบเป้าหมาย',
     description: 'ลบเป้าหมายสุขภาพออกจากระบบ',
@@ -259,6 +467,8 @@ export class HealthGoalController {
   // =====================================================
 
   @Put(':id/progress')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'อัพเดทความคืบหน้า',
     description: 'อัพเดทความคืบหน้าของเป้าหมาย',
@@ -272,13 +482,13 @@ export class HealthGoalController {
   async updateGoalProgress(
     @Param('id', ParseIntPipe) id: number,
     @User('id') userId: number,
-    @Body('current_value', ParseIntPipe) currentValue: number,
+    @Body() body: { current_value: number },
   ): Promise<ResponseDto<HealthGoalResponseDto>> {
     try {
       const updatedGoal = await this.healthGoalService.updateGoalProgress(
         id,
         userId,
-        currentValue,
+        body.current_value,
       );
       return ResponseDto.success(updatedGoal, 'อัพเดทความคืบหน้าสำเร็จ');
     } catch (error) {
@@ -287,6 +497,8 @@ export class HealthGoalController {
   }
 
   @Get(':id/progress')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'ดูความคืบหน้า',
     description: 'ดึงข้อมูลความคืบหน้าของเป้าหมาย',
@@ -309,39 +521,15 @@ export class HealthGoalController {
     }
   }
 
-  // =====================================================
-  // BULK OPERATIONS
-  // =====================================================
 
-  @Put('bulk-update')
-  @ApiOperation({
-    summary: 'อัพเดทเป้าหมายหลายรายการ',
-    description: 'อัพเดทเป้าหมายหลายรายการพร้อมกัน',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'อัพเดทเป้าหมายสำเร็จ',
-  })
-  async bulkUpdateGoals(
-    @User('id') userId: number,
-    @Body(ValidationPipe) bulkUpdateDto: HealthGoalBulkUpdateDto,
-  ): Promise<ResponseDto<{ message: string; updated_count: number }>> {
-    try {
-      const result = await this.healthGoalService.bulkUpdateGoals(
-        userId,
-        bulkUpdateDto,
-      );
-      return ResponseDto.success(result, 'อัพเดทเป้าหมายสำเร็จ');
-    } catch (error) {
-      return ResponseDto.error(error.message);
-    }
-  }
 
   // =====================================================
   // TEMPLATES & RECOMMENDATIONS
   // =====================================================
 
   @Get('templates')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'ดูเทมเพลตเป้าหมาย',
     description: 'ดึงเทมเพลตเป้าหมายสุขภาพที่แนะนำ',
@@ -361,6 +549,8 @@ export class HealthGoalController {
   }
 
   @Get('recommendations')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'ดูคำแนะนำเป้าหมาย',
     description: 'ดึงคำแนะนำเป้าหมายสุขภาพที่เหมาะสมกับผู้ใช้',
@@ -387,6 +577,8 @@ export class HealthGoalController {
   // =====================================================
 
   @Get('stats/overview')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'ดูสถิติภาพรวม',
     description: 'ดึงสถิติภาพรวมของเป้าหมายสุขภาพของผู้ใช้',
@@ -412,6 +604,8 @@ export class HealthGoalController {
   // =====================================================
 
   @Put(':id/complete')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'ทำเป้าหมายให้เสร็จ',
     description: 'ทำเป้าหมายให้เสร็จสิ้น',
@@ -439,6 +633,8 @@ export class HealthGoalController {
   }
 
   @Put(':id/pause')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'หยุดเป้าหมายชั่วคราว',
     description: 'หยุดเป้าหมายชั่วคราว',
@@ -466,6 +662,8 @@ export class HealthGoalController {
   }
 
   @Put(':id/resume')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'กลับมาเริ่มเป้าหมาย',
     description: 'กลับมาเริ่มเป้าหมายที่หยุดไว้',
@@ -493,6 +691,8 @@ export class HealthGoalController {
   }
 
   @Put(':id/cancel')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'ยกเลิกเป้าหมาย',
     description: 'ยกเลิกเป้าหมายที่ไม่ได้ทำต่อ',
@@ -524,6 +724,8 @@ export class HealthGoalController {
   // =====================================================
 
   @Get('search/active')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'ค้นหาเป้าหมายที่กำลังดำเนินการ',
     description: 'ดึงเป้าหมายที่กำลังดำเนินการอยู่',
@@ -547,6 +749,8 @@ export class HealthGoalController {
   }
 
   @Get('search/completed')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'ค้นหาเป้าหมายที่เสร็จสิ้น',
     description: 'ดึงเป้าหมายที่เสร็จสิ้นแล้ว',
@@ -570,6 +774,8 @@ export class HealthGoalController {
   }
 
   @Get('search/overdue')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'ค้นหาเป้าหมายที่เกินกำหนด',
     description: 'ดึงเป้าหมายที่เกินกำหนดแล้ว',
@@ -595,6 +801,8 @@ export class HealthGoalController {
   }
 
   @Get('search/priority/:priority')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'ค้นหาตามความสำคัญ',
     description: 'ดึงเป้าหมายตามระดับความสำคัญ',
@@ -624,6 +832,8 @@ export class HealthGoalController {
   }
 
   @Get('search/type/:type')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'ค้นหาตามประเภท',
     description: 'ดึงเป้าหมายตามประเภท',

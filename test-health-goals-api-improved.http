@@ -1,0 +1,219 @@
+### Health Goals API Testing - Improved Version
+### Base URL: http://localhost:3000
+
+### =====================================================
+### PUBLIC ENDPOINTS (NO AUTHENTICATION REQUIRED)
+### =====================================================
+
+### 1. Test API Health
+GET http://localhost:3000/health-goals/test/public
+
+### 2. Health Check with Endpoint Information
+GET http://localhost:3000/health-goals/test/health-check
+
+### 3. Get Sample Data
+GET http://localhost:3000/health-goals/test/sample-data
+
+### 4. Create Sample Data (for testing)
+POST http://localhost:3000/health-goals/test/create-sample
+
+### =====================================================
+### PROTECTED ENDPOINTS (REQUIRE AUTHENTICATION)
+### =====================================================
+
+### 5. Get All Health Goals (Requires JWT Token)
+GET http://localhost:3000/health-goals
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 6. Get Health Goal by ID (Requires JWT Token)
+### Note: Use ID 1, 2, or 3 from sample data
+GET http://localhost:3000/health-goals/1
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 7. Create Health Goal (Requires JWT Token)
+POST http://localhost:3000/health-goals
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "goal_type": "weight_loss",
+  "title": "ลดน้ำหนัก 5 กิโลกรัม",
+  "description": "ลดน้ำหนักเพื่อสุขภาพที่ดีขึ้น",
+  "target_value": 5,
+  "current_value": 0,
+  "unit": "kg",
+  "start_date": "2024-01-01",
+  "target_date": "2024-06-01",
+  "priority": "medium"
+}
+
+### 8. Update Health Goal (Requires JWT Token)
+PUT http://localhost:3000/health-goals/1
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "title": "ลดน้ำหนัก 10 กิโลกรัม",
+  "description": "อัพเดทเป้าหมายการลดน้ำหนักให้มากขึ้น",
+  "target_value": 10,
+  "priority": "high"
+}
+
+### 9. Update Goal Progress (Requires JWT Token)
+PUT http://localhost:3000/health-goals/1/progress
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "current_value": 3
+}
+
+### 10. Complete Goal (Requires JWT Token)
+PUT http://localhost:3000/health-goals/1/complete
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 11. Pause Goal (Requires JWT Token)
+PUT http://localhost:3000/health-goals/2/pause
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 12. Resume Goal (Requires JWT Token)
+PUT http://localhost:3000/health-goals/2/resume
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 13. Cancel Goal (Requires JWT Token)
+PUT http://localhost:3000/health-goals/3/cancel
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 14. Delete Health Goal (Requires JWT Token)
+DELETE http://localhost:3000/health-goals/1
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### =====================================================
+### SEARCH & FILTER ENDPOINTS (REQUIRE AUTHENTICATION)
+### =====================================================
+
+### 15. Get Active Goals
+GET http://localhost:3000/health-goals/search/active
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 16. Get Completed Goals
+GET http://localhost:3000/health-goals/search/completed
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 17. Get Goals by Priority
+GET http://localhost:3000/health-goals/search/priority/high
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 18. Get Goals by Type
+GET http://localhost:3000/health-goals/search/type/weight_loss
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### =====================================================
+### SPECIAL ENDPOINTS (REQUIRE AUTHENTICATION)
+### =====================================================
+
+### 19. Get Goal Templates
+GET http://localhost:3000/health-goals/templates
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 20. Get Goal Recommendations
+GET http://localhost:3000/health-goals/recommendations
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 21. Get Goal Statistics
+GET http://localhost:3000/health-goals/stats/overview
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 22. Bulk Update Goals
+PUT http://localhost:3000/health-goals/bulk-update
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "goal_ids": [1, 2, 3],
+  "updates": {
+    "status": "active",
+    "priority": "medium"
+  }
+}
+
+### =====================================================
+### ADVANCED SEARCH WITH QUERY PARAMETERS
+### =====================================================
+
+### 23. Search with Multiple Filters
+GET http://localhost:3000/health-goals?goal_type=weight_loss&status=active&priority=high&page=1&limit=5
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 24. Search by Date Range
+GET http://localhost:3000/health-goals?start_date_from=2024-01-01&start_date_to=2024-12-31
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 25. Search by Text
+GET http://localhost:3000/health-goals?search=ลดน้ำหนัก
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### =====================================================
+### TESTING INSTRUCTIONS
+### =====================================================
+
+### Step 1: Test Public Endpoints First
+### 1. Test API health: GET /health-goals/test/public
+### 2. Check available endpoints: GET /health-goals/test/health-check
+### 3. Get sample data: GET /health-goals/test/sample-data
+
+### Step 2: Get JWT Token (if you have auth endpoint)
+### POST to your auth endpoint to get JWT token
+### Example: POST /auth/login with email/password
+
+### Step 3: Test Protected Endpoints
+### 1. Replace YOUR_JWT_TOKEN_HERE with actual token
+### 2. Test GET /health-goals first
+### 3. Then test other endpoints
+
+### Step 4: Troubleshooting
+### - If you get 401: Check JWT token
+### - If you get 404: Check if the resource exists
+### - If you get 400: Check request body format
+### - If you get 500: Check server logs
+
+### =====================================================
+### COMMON ISSUES & SOLUTIONS
+### =====================================================
+
+### Issue: "JSON object requested, multiple (or no) rows returned"
+### Solution: 
+### 1. Check if the ID exists in the database
+### 2. Verify JWT token is valid
+### 3. Use sample data endpoints first to see available IDs
+
+### Issue: 401 Unauthorized
+### Solution:
+### 1. Get valid JWT token from auth endpoint
+### 2. Include token in Authorization header
+### 3. Check if token has expired
+
+### Issue: 404 Not Found
+### Solution:
+### 1. Verify the endpoint URL is correct
+### 2. Check if the resource ID exists
+### 3. Use sample data to find valid IDs
+
+### =====================================================
+### SAMPLE DATA STRUCTURE
+### =====================================================
+
+### Available Sample IDs: 1, 2, 3
+### Goal Types: weight_loss, muscle_gain, nutrition
+### Statuses: active, completed, paused, cancelled
+### Priorities: low, medium, high, urgent
+
+### =====================================================
+### NOTES
+### =====================================================
+
+### - All protected endpoints require valid JWT token
+### - Sample data is for testing only (not persisted)
+### - Use IDs 1, 2, 3 for testing with sample data
+### - Check response status and message for debugging
+### - API base URL: http://localhost:3000

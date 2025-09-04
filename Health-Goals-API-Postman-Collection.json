@@ -1,0 +1,472 @@
+{
+  "info": {
+    "name": "Health Goals API - Vita Wise AI",
+    "description": "Collection สำหรับทดสอบ Health Goals API ของ Vita Wise AI",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{auth_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "your_jwt_token_here",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Goals",
+      "item": [
+        {
+          "name": "Get All Health Goals",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/health-goals",
+              "host": ["{{base_url}}"],
+              "path": ["health-goals"]
+            },
+            "description": "ดึงรายการเป้าหมายสุขภาพทั้งหมดของผู้ใช้"
+          }
+        },
+        {
+          "name": "Get Health Goal by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/health-goals/1",
+              "host": ["{{base_url}}"],
+              "path": ["health-goals", "1"]
+            },
+            "description": "ดึงข้อมูลเป้าหมายสุขภาพตาม ID"
+          }
+        },
+        {
+          "name": "Create Health Goal",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"goal_type\": \"weight_loss\",\n  \"title\": \"ลดน้ำหนัก 5 กิโลกรัม\",\n  \"description\": \"ลดน้ำหนักเพื่อสุขภาพที่ดีขึ้น\",\n  \"target_value\": 5,\n  \"current_value\": 0,\n  \"unit\": \"kg\",\n  \"start_date\": \"2024-01-01\",\n  \"target_date\": \"2024-06-01\",\n  \"priority\": \"medium\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/health-goals",
+              "host": ["{{base_url}}"],
+              "path": ["health-goals"]
+            },
+            "description": "สร้างเป้าหมายสุขภาพใหม่"
+          }
+        },
+        {
+          "name": "Update Health Goal",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"ลดน้ำหนัก 10 กิโลกรัม\",\n  \"description\": \"อัพเดทเป้าหมายการลดน้ำหนัก\",\n  \"target_value\": 10,\n  \"priority\": \"high\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/health-goals/1",
+              "host": ["{{base_url}}"],
+              "path": ["health-goals", "1"]
+            },
+            "description": "อัพเดทข้อมูลเป้าหมายสุขภาพ"
+          }
+        },
+        {
+          "name": "Delete Health Goal",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/health-goals/1",
+              "host": ["{{base_url}}"],
+              "path": ["health-goals", "1"]
+            },
+            "description": "ลบเป้าหมายสุขภาพ"
+          }
+        },
+        {
+          "name": "Update Goal Progress",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_value\": 3\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/health-goals/1/progress",
+              "host": ["{{base_url}}"],
+              "path": ["health-goals", "1", "progress"]
+            },
+            "description": "อัพเดทความคืบหน้าของเป้าหมาย"
+          }
+        },
+        {
+          "name": "Get Goal Progress",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/health-goals/1/progress",
+              "host": ["{{base_url}}"],
+              "path": ["health-goals", "1", "progress"]
+            },
+            "description": "ดึงข้อมูลความคืบหน้าของเป้าหมาย"
+          }
+        },
+        {
+          "name": "Complete Goal",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/health-goals/1/complete",
+              "host": ["{{base_url}}"],
+              "path": ["health-goals", "1", "complete"]
+            },
+            "description": "ทำเป้าหมายให้เสร็จสิ้น"
+          }
+        },
+        {
+          "name": "Pause Goal",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/health-goals/1/pause",
+              "host": ["{{base_url}}"],
+              "path": ["health-goals", "1", "pause"]
+            },
+            "description": "หยุดเป้าหมายชั่วคราว"
+          }
+        },
+        {
+          "name": "Resume Goal",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/health-goals/1/resume",
+              "host": ["{{base_url}}"],
+              "path": ["health-goals", "1", "resume"]
+            },
+            "description": "กลับมาเริ่มเป้าหมายที่หยุดไว้"
+          }
+        },
+        {
+          "name": "Cancel Goal",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/health-goals/1/cancel",
+              "host": ["{{base_url}}"],
+              "path": ["health-goals", "1", "cancel"]
+            },
+            "description": "ยกเลิกเป้าหมาย"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Search & Filter",
+      "item": [
+        {
+          "name": "Get Active Goals",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/health-goals/search/active",
+              "host": ["{{base_url}}"],
+              "path": ["health-goals", "search", "active"]
+            },
+            "description": "ดึงเป้าหมายที่กำลังดำเนินการอยู่"
+          }
+        },
+        {
+          "name": "Get Completed Goals",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/health-goals/search/completed",
+              "host": ["{{base_url}}"],
+              "path": ["health-goals", "search", "completed"]
+            },
+            "description": "ดึงเป้าหมายที่เสร็จสิ้นแล้ว"
+          }
+        },
+        {
+          "name": "Get Overdue Goals",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/health-goals/search/overdue",
+              "host": ["{{base_url}}"],
+              "path": ["health-goals", "search", "overdue"]
+            },
+            "description": "ดึงเป้าหมายที่เกินกำหนดแล้ว"
+          }
+        },
+        {
+          "name": "Get Goals by Priority",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/health-goals/search/priority/high",
+              "host": ["{{base_url}}"],
+              "path": ["health-goals", "search", "priority", "high"]
+            },
+            "description": "ดึงเป้าหมายตามระดับความสำคัญ"
+          }
+        },
+        {
+          "name": "Get Goals by Type",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/health-goals/search/type/weight_loss",
+              "host": ["{{base_url}}"],
+              "path": ["health-goals", "search", "type", "weight_loss"]
+            },
+            "description": "ดึงเป้าหมายตามประเภท"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Templates & Recommendations",
+      "item": [
+        {
+          "name": "Get Goal Templates",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/health-goals/templates",
+              "host": ["{{base_url}}"],
+              "path": ["health-goals", "templates"]
+            },
+            "description": "ดึงเทมเพลตเป้าหมายสุขภาพที่แนะนำ"
+          }
+        },
+        {
+          "name": "Get Goal Recommendations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/health-goals/recommendations",
+              "host": ["{{base_url}}"],
+              "path": ["health-goals", "recommendations"]
+            },
+            "description": "ดึงคำแนะนำเป้าหมายสุขภาพที่เหมาะสมกับผู้ใช้"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Statistics & Analytics",
+      "item": [
+        {
+          "name": "Get Goal Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/health-goals/stats/overview",
+              "host": ["{{base_url}}"],
+              "path": ["health-goals", "stats", "overview"]
+            },
+            "description": "ดึงสถิติภาพรวมของเป้าหมายสุขภาพ"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bulk Operations",
+      "item": [
+        {
+          "name": "Bulk Update Goals",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"goal_ids\": [1, 2, 3],\n  \"updates\": {\n    \"status\": \"active\",\n    \"priority\": \"medium\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/health-goals/bulk-update",
+              "host": ["{{base_url}}"],
+              "path": ["health-goals", "bulk-update"]
+            },
+            "description": "อัพเดทเป้าหมายหลายรายการพร้อมกัน"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,159 @@
+### Health Goals API Testing - Vita Wise AI
+### Base URL: http://localhost:3000
+
+### 1. Get All Health Goals
+GET http://localhost:3000/health-goals
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 2. Create Health Goal
+POST http://localhost:3000/health-goals
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "goal_type": "weight_loss",
+  "title": "ลดน้ำหนัก 5 กิโลกรัม",
+  "description": "ลดน้ำหนักเพื่อสุขภาพที่ดีขึ้น",
+  "target_value": 5,
+  "current_value": 0,
+  "unit": "kg",
+  "start_date": "2024-01-01",
+  "target_date": "2024-06-01",
+  "priority": "medium"
+}
+
+### 3. Create Another Health Goal
+POST http://localhost:3000/health-goals
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "goal_type": "muscle_gain",
+  "title": "เพิ่มกล้ามเนื้อ",
+  "description": "สร้างกล้ามเนื้อให้แข็งแรง",
+  "target_value": 10,
+  "current_value": 0,
+  "unit": "kg",
+  "start_date": "2024-01-01",
+  "target_date": "2024-12-01",
+  "priority": "high"
+}
+
+### 4. Create Nutrition Goal
+POST http://localhost:3000/health-goals
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "goal_type": "nutrition",
+  "title": "กินผักผลไม้ให้ครบ 5 สี",
+  "description": "เพิ่มการกินผักผลไม้เพื่อสุขภาพที่ดี",
+  "target_value": 5,
+  "current_value": 2,
+  "unit": "สีต่อวัน",
+  "start_date": "2024-01-01",
+  "target_date": "2024-03-01",
+  "priority": "medium"
+}
+
+### 5. Get Health Goal by ID (replace 1 with actual ID)
+GET http://localhost:3000/health-goals/1
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 6. Update Health Goal
+PUT http://localhost:3000/health-goals/1
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "title": "ลดน้ำหนัก 10 กิโลกรัม",
+  "description": "อัพเดทเป้าหมายการลดน้ำหนักให้มากขึ้น",
+  "target_value": 10,
+  "priority": "high"
+}
+
+### 7. Update Goal Progress
+PUT http://localhost:3000/health-goals/1/progress
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "current_value": 3
+}
+
+### 8. Get Goal Progress
+GET http://localhost:3000/health-goals/1/progress
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 9. Get Active Goals
+GET http://localhost:3000/health-goals/search/active
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 10. Get Completed Goals
+GET http://localhost:3000/health-goals/search/completed
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 11. Get Goals by Priority
+GET http://localhost:3000/health-goals/search/priority/high
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 12. Get Goals by Type
+GET http://localhost:3000/health-goals/search/type/weight_loss
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 13. Get Goal Templates
+GET http://localhost:3000/health-goals/templates
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 14. Get Goal Recommendations
+GET http://localhost:3000/health-goals/recommendations
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 15. Get Goal Statistics
+GET http://localhost:3000/health-goals/stats/overview
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 16. Complete Goal
+PUT http://localhost:3000/health-goals/1/complete
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 17. Pause Goal
+PUT http://localhost:3000/health-goals/2/pause
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 18. Resume Goal
+PUT http://localhost:3000/health-goals/2/resume
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 19. Cancel Goal
+PUT http://localhost:3000/health-goals/3/cancel
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 20. Bulk Update Goals
+PUT http://localhost:3000/health-goals/bulk-update
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "goal_ids": [1, 2, 3],
+  "updates": {
+    "status": "active",
+    "priority": "medium"
+  }
+}
+
+### 21. Delete Health Goal
+DELETE http://localhost:3000/health-goals/1
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 22. Search with Query Parameters
+GET http://localhost:3000/health-goals?goal_type=weight_loss&status=active&priority=high&page=1&limit=5
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 23. Search by Date Range
+GET http://localhost:3000/health-goals?start_date_from=2024-01-01&start_date_to=2024-12-31
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 24. Search by Text
+GET http://localhost:3000/health-goals?search=ลดน้ำหนัก
+Authorization: Bearer YOUR_JWT_TOKEN_HERE

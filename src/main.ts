@@ -19,17 +19,17 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Enable validation pipe
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
-    }),
-  );
+  // Enable validation pipe (ปิดชั่วคราวเพื่อทดสอบ)
+  // app.useGlobalPipes(
+  //   new ValidationPipe({
+  //     whitelist: true,
+  //     forbidNonWhitelisted: false,
+  //     transform: true,
+  //     transformOptions: {
+  //       enableImplicitConversion: true,
+  //     },
+  //   }),
+  // );
 
   // Global exception filter
   app.useGlobalFilters(new HttpExceptionFilter());

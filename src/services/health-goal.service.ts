@@ -20,7 +20,6 @@ import {
   HealthGoalSearchDto,
   HealthGoalProgressDto,
   HealthGoalStatsDto,
-  HealthGoalBulkUpdateDto,
   HealthGoalTemplateDto,
   HealthGoalRecommendationDto,
 } from '../dto/health-goal.dto';
@@ -236,51 +235,7 @@ export class HealthGoalService {
   // BULK OPERATIONS
   // =====================================================
 
-  async bulkUpdateGoals(
-    userId: number,
-    bulkUpdateDto: HealthGoalBulkUpdateDto,
-  ): Promise<{ message: string; updated_count: number }> {
-    const { goal_ids, status, priority, target_date } = bulkUpdateDto;
 
-    const goals = await this.supabaseService.findHealthGoalsByIds(
-      goal_ids,
-      userId,
-    );
-
-    if (goals.length !== goal_ids.length) {
-      throw new BadRequestException('พบเป้าหมายที่ไม่สามารถอัพเดทได้');
-    }
-
-    let updatedCount = 0;
-    for (const goal of goals) {
-      let hasChanges = false;
-
-      if (status && goal.status !== status) {
-        goal.status = status;
-        hasChanges = true;
-      }
-
-      if (priority && goal.priority !== priority) {
-        goal.priority = priority;
-        hasChanges = true;
-      }
-
-      if (target_date && goal.target_date !== new Date(target_date)) {
-        goal.target_date = new Date(target_date);
-        hasChanges = true;
-      }
-
-      if (hasChanges) {
-        await this.supabaseService.updateHealthGoal(goal.id, userId, goal);
-        updatedCount++;
-      }
-    }
-
-    return {
-      message: `อัพเดทเป้าหมายสำเร็จ ${updatedCount} รายการ`,
-      updated_count: updatedCount,
-    };
-  }
 
   // =====================================================
   // GOAL TEMPLATES & RECOMMENDATIONS

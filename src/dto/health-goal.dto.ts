@@ -6,7 +6,6 @@ import {
   IsDateString,
   Min,
   Max,
-  IsArray,
 } from 'class-validator';
 import {
   GoalType,
@@ -222,22 +221,7 @@ export class HealthGoalStatsDto {
   }[];
 }
 
-export class HealthGoalBulkUpdateDto {
-  @IsArray()
-  goal_ids: number[];
 
-  @IsOptional()
-  @IsEnum(GoalStatus)
-  status?: GoalStatus;
-
-  @IsOptional()
-  @IsEnum(GoalPriority)
-  priority?: GoalPriority;
-
-  @IsOptional()
-  @IsDateString()
-  target_date?: string;
-}
 
 export class HealthGoalTemplateDto {
   @IsString()
