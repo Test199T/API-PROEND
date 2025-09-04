@@ -301,10 +301,7 @@ export class DashboardController {
     const userId = req.user.id;
 
     try {
-      const sleepLogs = await this.supabaseService.getSleepLogsByUserId(
-        userId,
-        date,
-      );
+      const sleepLogs = await this.supabaseService.getSleepLogsByUserId(userId);
       return {
         success: true,
         data: sleepLogs,

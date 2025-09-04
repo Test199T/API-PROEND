@@ -60,10 +60,7 @@ export class DashboardService {
       const foodLogs = await this.supabaseService.getFoodLogsByUserId(userId);
       const exerciseLogs =
         await this.supabaseService.getExerciseLogsByUserId(userId);
-      const sleepLogs = await this.supabaseService.getSleepLogsByUserId(
-        userId,
-        date,
-      );
+      const sleepLogs = await this.supabaseService.getSleepLogsByUserId(userId);
       const waterLogs = await this.supabaseService.getWaterLogsByUserId(
         userId,
         date,

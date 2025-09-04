@@ -350,91 +350,9 @@ export class SupabaseService implements OnModuleInit {
     return { data, count: totalCount || 0 };
   }
 
-  // Sleep Log
-  async createSleepLog(sleepData: any) {
-    const { data, error } = await this.supabase
-      .from('sleep_log')
-      .insert(sleepData)
-      .select()
-      .single();
 
-    if (error) throw error;
-    return data;
-  }
 
-  async getSleepLogsByUserId(userId: number, date?: string) {
-    let query = this.supabase
-      .from('sleep_log')
-      .select('*')
-      .eq('user_id', userId);
 
-    if (date) {
-      query = query.eq('sleep_date', date);
-    }
-
-    const { data, error } = await query.order('sleep_date', {
-      ascending: false,
-    });
-
-    if (error) throw error;
-    return data;
-  }
-
-  async getSleepLogs(userId: number, query?: any) {
-    let queryBuilder = this.supabase
-      .from('sleep_log')
-      .select('*')
-      .eq('user_id', userId)
-      .order('sleep_date', { ascending: false });
-
-    if (query?.date_from) {
-      queryBuilder = queryBuilder.gte('sleep_date', query.date_from);
-    }
-
-    if (query?.date_to) {
-      queryBuilder = queryBuilder.lte('sleep_date', query.date_to);
-    }
-
-    const { data, error } = await queryBuilder;
-    if (error) throw error;
-    return data;
-  }
-
-  async getSleepLogById(id: string, userId: number) {
-    const { data, error } = await this.supabase
-      .from('sleep_log')
-      .select('*')
-      .eq('id', id)
-      .eq('user_id', userId)
-      .single();
-
-    if (error) throw error;
-    return data;
-  }
-
-  async updateSleepLog(id: string, userId: number, updateData: any) {
-    const { data, error } = await this.supabase
-      .from('sleep_log')
-      .update(updateData)
-      .eq('id', id)
-      .eq('user_id', userId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  }
-
-  async deleteSleepLog(id: string, userId: number) {
-    const { error } = await this.supabase
-      .from('sleep_log')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', userId);
-
-    if (error) throw error;
-    return { message: 'Sleep log deleted successfully' };
-  }
 
   // Additional Sleep Log Methods
   async getDailySleepStats(userId: number, date: string) {
@@ -2366,6 +2284,331 @@ export class SupabaseService implements OnModuleInit {
     }
 
     return { current_streak: currentStreak, longest_streak: longestStreak };
+  }
+
+  // Sleep Log Methods
+  async createSleepLog(sleepLogData: any) {
+    const { data, error } = await this.supabase
+      .from('sleep_log')
+      .insert(sleepLogData)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async getSleepLogs(userId: number, query?: any) {
+    let queryBuilder = this.supabase
+      .from('sleep_log')
+      .select('*')
+      .eq('user_id', userId)
+      .order('sleep_date', { ascending: false });
+
+    // Apply filters
+    if (query?.sleep_date_from) {
+      queryBuilder = queryBuilder.gte('sleep_date', query.sleep_date_from);
+    }
+    if (query?.sleep_date_to) {
+      queryBuilder = queryBuilder.lte('sleep_date', query.sleep_date_to);
+    }
+    if (query?.sleep_quality) {
+      queryBuilder = queryBuilder.eq('sleep_quality', query.sleep_quality);
+    }
+    if (query?.min_sleep_duration) {
+      queryBuilder = queryBuilder.gte('sleep_duration_hours', query.min_sleep_duration);
+    }
+    if (query?.max_sleep_duration) {
+      queryBuilder = queryBuilder.lte('sleep_duration_hours', query.max_sleep_duration);
+    }
+    if (query?.min_sleep_efficiency) {
+      queryBuilder = queryBuilder.gte('sleep_efficiency_percentage', query.min_sleep_efficiency);
+    }
+    if (query?.max_sleep_efficiency) {
+      queryBuilder = queryBuilder.lte('sleep_efficiency_percentage', query.max_sleep_efficiency);
+    }
+    if (query?.search) {
+      queryBuilder = queryBuilder.ilike('notes', `%${query.search}%`);
+    }
+
+    // Apply pagination
+    if (query?.limit) {
+      queryBuilder = queryBuilder.limit(query.limit);
+    }
+    if (query?.offset) {
+      queryBuilder = queryBuilder.range(query.offset, query.offset + (query.limit || 10) - 1);
+    }
+
+    const { data, error } = await queryBuilder;
+
+    if (error) throw error;
+    return data;
+  }
+
+  async getSleepLog(id: string, userId: number) {
+    const { data, error } = await this.supabase
+      .from('sleep_log')
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', userId)
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async updateSleepLog(id: string, userId: number, updateData: any) {
+    const { data, error } = await this.supabase
+      .from('sleep_log')
+      .update(updateData)
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async deleteSleepLog(id: string, userId: number) {
+    const { error } = await this.supabase
+      .from('sleep_log')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId);
+
+    if (error) throw error;
+    return { message: 'Sleep log deleted successfully' };
+  }
+
+  async getSleepLogStats(userId: number, date?: string) {
+    const targetDate = date || new Date().toISOString().split('T')[0];
+
+    const { data, error } = await this.supabase
+      .from('sleep_log')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('sleep_date', targetDate);
+
+    if (error) throw error;
+
+    if (data.length === 0) {
+      return {
+        total_sleep_logs: 0,
+        average_sleep_duration_hours: 0,
+        average_sleep_efficiency_percentage: 0,
+        average_sleep_score: 0,
+        average_time_to_fall_asleep_minutes: 0,
+        average_awakenings_count: 0,
+        sleep_quality_distribution: {},
+        sleep_duration_distribution: {
+          under_6_hours: 0,
+          six_to_seven_hours: 0,
+          seven_to_eight_hours: 0,
+          eight_to_nine_hours: 0,
+          over_9_hours: 0,
+        },
+        sleep_score_distribution: {
+          excellent: 0,
+          good: 0,
+          fair: 0,
+          poor: 0,
+          very_poor: 0,
+        },
+      };
+    }
+
+    // Calculate statistics
+    const totalLogs = data.length;
+    const avgSleepDuration = data.reduce((sum, log) => sum + (log.sleep_duration_hours || 0), 0) / totalLogs;
+    const avgSleepEfficiency = data.reduce((sum, log) => sum + (log.sleep_efficiency_percentage || 0), 0) / totalLogs;
+    const avgTimeToFallAsleep = data.reduce((sum, log) => sum + (log.time_to_fall_asleep_minutes || 0), 0) / totalLogs;
+    const avgAwakenings = data.reduce((sum, log) => sum + (log.awakenings_count || 0), 0) / totalLogs;
+
+    // Calculate sleep quality distribution
+    const qualityDistribution = data.reduce((acc, log) => {
+      acc[log.sleep_quality] = (acc[log.sleep_quality] || 0) + 1;
+      return acc;
+    }, {});
+
+    // Calculate sleep duration distribution
+    const durationDistribution = data.reduce((acc, log) => {
+      const duration = log.sleep_duration_hours || 0;
+      if (duration < 6) acc.under_6_hours++;
+      else if (duration < 7) acc.six_to_seven_hours++;
+      else if (duration < 8) acc.seven_to_eight_hours++;
+      else if (duration < 9) acc.eight_to_nine_hours++;
+      else acc.over_9_hours++;
+      return acc;
+    }, {
+      under_6_hours: 0,
+      six_to_seven_hours: 0,
+      seven_to_eight_hours: 0,
+      eight_to_nine_hours: 0,
+      over_9_hours: 0,
+    });
+
+    return {
+      total_sleep_logs: totalLogs,
+      average_sleep_duration_hours: Math.round(avgSleepDuration * 100) / 100,
+      average_sleep_efficiency_percentage: Math.round(avgSleepEfficiency * 100) / 100,
+      average_sleep_score: 0, // Will be calculated in service
+      average_time_to_fall_asleep_minutes: Math.round(avgTimeToFallAsleep * 100) / 100,
+      average_awakenings_count: Math.round(avgAwakenings * 100) / 100,
+      sleep_quality_distribution: qualityDistribution,
+      sleep_duration_distribution: durationDistribution,
+      sleep_score_distribution: {
+        excellent: 0,
+        good: 0,
+        fair: 0,
+        poor: 0,
+        very_poor: 0,
+      },
+    };
+  }
+
+  async getSleepLogTrends(userId: number, days: number = 7) {
+    try {
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+
+      console.log(`Getting sleep trends for user ${userId}, days: ${days}`);
+      console.log(`Date range: ${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]}`);
+
+      const { data, error } = await this.supabase
+        .from('sleep_log')
+        .select('*')
+        .eq('user_id', userId)
+        .gte('sleep_date', startDate.toISOString().split('T')[0])
+        .lte('sleep_date', endDate.toISOString().split('T')[0])
+        .order('sleep_date', { ascending: true });
+
+      if (error) {
+        console.error('Supabase error in getSleepLogTrends:', error);
+        throw error;
+      }
+
+      console.log(`Found ${data?.length || 0} sleep logs for trends`);
+
+      return data.map(log => ({
+        date: log.sleep_date,
+        sleep_duration_hours: log.sleep_duration_hours || 0,
+        sleep_score: 0, // Will be calculated in service
+        sleep_quality: log.sleep_quality,
+        sleep_efficiency_percentage: log.sleep_efficiency_percentage || 0,
+      }));
+    } catch (error) {
+      console.error('Error in getSleepLogTrends:', error);
+      throw error;
+    }
+  }
+
+  async getSleepLogsByUserId(userId: number) {
+    const { data, error } = await this.supabase
+      .from('sleep_log')
+      .select('*')
+      .eq('user_id', userId)
+      .order('sleep_date', { ascending: false });
+
+    if (error) throw error;
+    return data;
+  }
+
+  async getSleepLogAnalysis(userId: number, days: number = 30) {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    const { data, error } = await this.supabase
+      .from('sleep_log')
+      .select('*')
+      .eq('user_id', userId)
+      .gte('sleep_date', startDate.toISOString().split('T')[0])
+      .lte('sleep_date', endDate.toISOString().split('T')[0])
+      .order('sleep_date', { ascending: false });
+
+    if (error) throw error;
+
+    if (data.length === 0) {
+      return {
+        overall_assessment: 'ไม่มีข้อมูลการนอนเพียงพอสำหรับการวิเคราะห์',
+        strengths: [],
+        areas_for_improvement: ['เริ่มบันทึกข้อมูลการนอนเพื่อการวิเคราะห์'],
+        recommendations: [],
+        sleep_score_trend: 'stable' as const,
+        key_metrics: [],
+      };
+    }
+
+    // Calculate analysis
+    const avgSleepDuration = data.reduce((sum, log) => sum + (log.sleep_duration_hours || 0), 0) / data.length;
+    const avgSleepEfficiency = data.reduce((sum, log) => sum + (log.sleep_efficiency_percentage || 0), 0) / data.length;
+    const avgTimeToFallAsleep = data.reduce((sum, log) => sum + (log.time_to_fall_asleep_minutes || 0), 0) / data.length;
+
+    const strengths: string[] = [];
+    const areasForImprovement: string[] = [];
+    const recommendations: string[] = [];
+
+    if (avgSleepDuration >= 7 && avgSleepDuration <= 9) {
+      strengths.push('ระยะเวลาการนอนอยู่ในเกณฑ์ที่เหมาะสม');
+    } else if (avgSleepDuration < 7) {
+      areasForImprovement.push('ระยะเวลาการนอนน้อยเกินไป');
+      recommendations.push('พยายามนอนให้ได้ 7-9 ชั่วโมงต่อคืน');
+    } else {
+      areasForImprovement.push('ระยะเวลาการนอนมากเกินไป');
+      recommendations.push('ตรวจสอบคุณภาพการนอนและปรับเวลานอนให้เหมาะสม');
+    }
+
+    if (avgSleepEfficiency >= 85) {
+      strengths.push('ประสิทธิภาพการนอนดี');
+    } else {
+      areasForImprovement.push('ประสิทธิภาพการนอนต่ำ');
+      recommendations.push('ปรับปรุงสภาพแวดล้อมการนอนและกิจวัตรก่อนนอน');
+    }
+
+    if (avgTimeToFallAsleep <= 20) {
+      strengths.push('หลับได้เร็ว');
+    } else {
+      areasForImprovement.push('ใช้เวลานานในการหลับ');
+      recommendations.push('หลีกเลี่ยงการใช้อุปกรณ์อิเล็กทรอนิกส์ก่อนนอน');
+    }
+
+    return {
+      overall_assessment: strengths.length > areasForImprovement.length ? 'คุณภาพการนอนโดยรวมดี' : 'มีจุดที่ควรปรับปรุงในการนอน',
+      strengths,
+      areas_for_improvement: areasForImprovement,
+      recommendations: recommendations.map(rec => ({
+        category: 'sleep_improvement',
+        title: rec,
+        description: rec,
+        priority: 'medium',
+        actionable_steps: [rec],
+        expected_benefit: 'ปรับปรุงคุณภาพการนอน',
+        confidence_score: 0.8,
+      })),
+      sleep_score_trend: 'stable' as const,
+      key_metrics: [
+        {
+          metric: 'ระยะเวลาการนอน',
+          current_value: avgSleepDuration,
+          target_value: 8,
+          status: avgSleepDuration >= 7 && avgSleepDuration <= 9 ? 'good' : 'needs_improvement',
+        },
+        {
+          metric: 'ประสิทธิภาพการนอน',
+          current_value: avgSleepEfficiency,
+          target_value: 85,
+          status: avgSleepEfficiency >= 85 ? 'good' : 'needs_improvement',
+        },
+        {
+          metric: 'เวลาที่ใช้ในการหลับ',
+          current_value: avgTimeToFallAsleep,
+          target_value: 15,
+          status: avgTimeToFallAsleep <= 20 ? 'good' : 'needs_improvement',
+        },
+      ],
+    };
   }
 
   // User Preferences

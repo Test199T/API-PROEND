@@ -1,103 +1,125 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
 import { User } from './user.entity';
 
-@Entity('sleep_log')
+export enum SleepQuality {
+  EXCELLENT = 'excellent',
+  GOOD = 'good',
+  FAIR = 'fair',
+  POOR = 'poor',
+  VERY_POOR = 'very_poor',
+}
+
+export enum SleepStage {
+  DEEP = 'deep',
+  LIGHT = 'light',
+  REM = 'rem',
+  AWAKE = 'awake',
+}
+
 export class SleepLog {
-  @PrimaryGeneratedColumn()
   id: number;
-
-  @Column({ name: 'user_id' })
   userId: number;
-
-  @ManyToOne(() => User, (user) => user.sleepLogs, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'user_id' })
   user: User;
-
-  @Column({ type: 'date' })
+  
+  // Basic sleep information
   sleep_date: Date;
-
-  @Column({ type: 'time', nullable: true })
-  bedtime: string;
-
-  @Column({ type: 'time', nullable: true })
-  wake_time: string;
-
-  @Column({ type: 'decimal', precision: 4, scale: 2, nullable: true })
-  total_sleep_hours: number;
-
-  @Column()
-  sleep_quality: number;
-
-  @Column({ type: 'decimal', precision: 4, scale: 2, nullable: true })
-  deep_sleep_hours: number;
-
-  @Column({ type: 'decimal', precision: 4, scale: 2, nullable: true })
-  rem_sleep_hours: number;
-
-  @Column({ type: 'decimal', precision: 4, scale: 2, nullable: true })
-  light_sleep_hours: number;
-
-  @Column({ type: 'text', nullable: true })
-  sleep_notes: string;
-
-  @Column({ type: 'text', array: true, nullable: true })
-  factors_affecting_sleep: string[];
-
-  @CreateDateColumn()
+  bedtime: string; // HH:MM format
+  wake_time: string; // HH:MM format
+  sleep_duration_hours: number;
+  
+  // Sleep quality and metrics
+  sleep_quality: SleepQuality;
+  sleep_efficiency_percentage: number; // percentage of time actually sleeping
+  time_to_fall_asleep_minutes: number; // minutes to fall asleep
+  awakenings_count: number; // number of times woke up during night
+  
+  // Sleep stages (in minutes)
+  deep_sleep_minutes: number;
+  light_sleep_minutes: number;
+  rem_sleep_minutes: number;
+  awake_minutes: number;
+  
+  // Additional metrics
+  heart_rate_avg: number; // average heart rate during sleep
+  heart_rate_min: number; // minimum heart rate during sleep
+  heart_rate_max: number; // maximum heart rate during sleep
+  oxygen_saturation_avg: number; // average oxygen saturation
+  
+  // Environmental factors
+  room_temperature_celsius: number;
+  noise_level_db: number;
+  light_level_lux: number;
+  
+  // Lifestyle factors
+  caffeine_intake_mg: number; // caffeine consumed before sleep
+  alcohol_intake_ml: number; // alcohol consumed before sleep
+  exercise_before_bed_hours: number; // hours between last exercise and bedtime
+  screen_time_before_bed_minutes: number; // minutes of screen time before bed
+  
+  // Sleep aids and medications
+  sleep_aids_used: string[]; // array of sleep aids used
+  medications_taken: string[]; // array of medications taken
+  
+  // Subjective ratings (1-10 scale)
+  stress_level: number;
+  mood_before_sleep: number;
+  mood_after_wake: number;
+  energy_level: number;
+  
+  // Notes and observations
+  notes: string;
+  dreams_remembered: boolean;
+  nightmares: boolean;
+  
+  // Timestamps
   created_at: Date;
+  updated_at: Date;
 
   // Computed properties
-  get sleep_efficiency(): number | null {
-    if (!this.total_sleep_hours || !this.bedtime || !this.wake_time)
-      return null;
+  get total_sleep_time_minutes(): number {
+    return this.sleep_duration_hours * 60;
+  }
 
-    const bedtime = new Date(`2000-01-01 ${this.bedtime}`);
-    const wakeTime = new Date(`2000-01-01 ${this.wake_time}`);
+  get sleep_stages_total_minutes(): number {
+    return this.deep_sleep_minutes + this.light_sleep_minutes + 
+           this.rem_sleep_minutes + this.awake_minutes;
+  }
 
-    if (wakeTime <= bedtime) {
-      wakeTime.setDate(wakeTime.getDate() + 1);
+  get deep_sleep_percentage(): number {
+    if (this.total_sleep_time_minutes === 0) return 0;
+    return Math.round((this.deep_sleep_minutes / this.total_sleep_time_minutes) * 100);
+  }
+
+  get light_sleep_percentage(): number {
+    if (this.total_sleep_time_minutes === 0) return 0;
+    return Math.round((this.light_sleep_minutes / this.total_sleep_time_minutes) * 100);
+  }
+
+  get rem_sleep_percentage(): number {
+    if (this.total_sleep_time_minutes === 0) return 0;
+    return Math.round((this.rem_sleep_minutes / this.total_sleep_time_minutes) * 100);
+  }
+
+  get awake_percentage(): number {
+    if (this.total_sleep_time_minutes === 0) return 0;
+    return Math.round((this.awake_minutes / this.total_sleep_time_minutes) * 100);
+  }
+
+  get sleep_duration_formatted(): string {
+    const hours = Math.floor(this.sleep_duration_hours);
+    const minutes = Math.round((this.sleep_duration_hours - hours) * 60);
+    
+    if (hours > 0) {
+      return `${hours} ชม. ${minutes} นาที`;
     }
-
-    const timeInBed =
-      (wakeTime.getTime() - bedtime.getTime()) / (1000 * 60 * 60);
-    return Number(((this.total_sleep_hours / timeInBed) * 100).toFixed(1));
+    return `${minutes} นาที`;
   }
 
-  get sleep_quality_text(): string {
-    if (!this.sleep_quality) return 'ไม่ระบุ';
-
-    if (this.sleep_quality >= 9) return 'ดีมาก';
-    if (this.sleep_quality >= 7) return 'ดี';
-    if (this.sleep_quality >= 5) return 'ปานกลาง';
-    if (this.sleep_quality >= 3) return 'ไม่ดี';
-    return 'แย่มาก';
+  get bedtime_formatted(): string {
+    return this.bedtime;
   }
 
-  get sleep_quality_color(): string {
-    if (!this.sleep_quality) return 'gray';
-
-    if (this.sleep_quality >= 8) return 'green';
-    if (this.sleep_quality >= 6) return 'yellow';
-    if (this.sleep_quality >= 4) return 'orange';
-    return 'red';
-  }
-
-  get is_adequate_sleep(): boolean {
-    if (!this.total_sleep_hours) return false;
-    return this.total_sleep_hours >= 7 && this.total_sleep_hours <= 9;
-  }
-
-  get sleep_cycle_count(): number | null {
-    if (!this.total_sleep_hours) return null;
-    // สมมติว่า 1 sleep cycle = 90 นาที
-    return Math.round((this.total_sleep_hours * 60) / 90);
+  get wake_time_formatted(): string {
+    return this.wake_time;
   }
 
   get sleep_date_formatted(): string {
@@ -109,13 +131,110 @@ export class SleepLog {
     });
   }
 
-  get bedtime_formatted(): string {
-    if (!this.bedtime) return 'ไม่ระบุ';
-    return this.bedtime;
+  get is_healthy_sleep_duration(): boolean {
+    // Healthy sleep duration is typically 7-9 hours for adults
+    return this.sleep_duration_hours >= 7 && this.sleep_duration_hours <= 9;
   }
 
-  get wake_time_formatted(): string {
-    if (!this.wake_time) return 'ไม่ระบุ';
-    return this.wake_time;
+  get is_healthy_sleep_efficiency(): boolean {
+    // Healthy sleep efficiency is typically 85% or higher
+    return this.sleep_efficiency_percentage >= 85;
+  }
+
+  get is_healthy_time_to_fall_asleep(): boolean {
+    // Healthy time to fall asleep is typically 10-20 minutes
+    return this.time_to_fall_asleep_minutes >= 10 && this.time_to_fall_asleep_minutes <= 20;
+  }
+
+  get sleep_score(): number {
+    // Calculate overall sleep score (0-100)
+    let score = 0;
+    
+    // Sleep duration (30 points)
+    if (this.is_healthy_sleep_duration) {
+      score += 30;
+    } else if (this.sleep_duration_hours >= 6 && this.sleep_duration_hours < 7) {
+      score += 20;
+    } else if (this.sleep_duration_hours >= 9 && this.sleep_duration_hours <= 10) {
+      score += 25;
+    } else {
+      score += 10;
+    }
+    
+    // Sleep efficiency (25 points)
+    if (this.is_healthy_sleep_efficiency) {
+      score += 25;
+    } else if (this.sleep_efficiency_percentage >= 75) {
+      score += 15;
+    } else {
+      score += 5;
+    }
+    
+    // Time to fall asleep (20 points)
+    if (this.is_healthy_time_to_fall_asleep) {
+      score += 20;
+    } else if (this.time_to_fall_asleep_minutes <= 30) {
+      score += 15;
+    } else {
+      score += 5;
+    }
+    
+    // Sleep quality (15 points)
+    switch (this.sleep_quality) {
+      case SleepQuality.EXCELLENT:
+        score += 15;
+        break;
+      case SleepQuality.GOOD:
+        score += 12;
+        break;
+      case SleepQuality.FAIR:
+        score += 8;
+        break;
+      case SleepQuality.POOR:
+        score += 4;
+        break;
+      case SleepQuality.VERY_POOR:
+        score += 0;
+        break;
+    }
+    
+    // Awakenings (10 points)
+    if (this.awakenings_count <= 1) {
+      score += 10;
+    } else if (this.awakenings_count <= 3) {
+      score += 7;
+    } else if (this.awakenings_count <= 5) {
+      score += 4;
+    } else {
+      score += 0;
+    }
+    
+    return Math.min(score, 100);
+  }
+
+  get sleep_quality_description(): string {
+    switch (this.sleep_quality) {
+      case SleepQuality.EXCELLENT:
+        return 'ยอดเยี่ยม';
+      case SleepQuality.GOOD:
+        return 'ดี';
+      case SleepQuality.FAIR:
+        return 'ปานกลาง';
+      case SleepQuality.POOR:
+        return 'แย่';
+      case SleepQuality.VERY_POOR:
+        return 'แย่มาก';
+      default:
+        return 'ไม่ระบุ';
+    }
+  }
+
+  get sleep_score_description(): string {
+    if (this.sleep_score >= 90) return 'ยอดเยี่ยม';
+    if (this.sleep_score >= 80) return 'ดีมาก';
+    if (this.sleep_score >= 70) return 'ดี';
+    if (this.sleep_score >= 60) return 'ปานกลาง';
+    if (this.sleep_score >= 50) return 'แย่';
+    return 'แย่มาก';
   }
 }

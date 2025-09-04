@@ -4,6 +4,7 @@ import {
   IsEnum,
   IsNumber,
   IsDateString,
+  IsArray,
   Min,
   Max,
 } from 'class-validator';
