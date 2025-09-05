@@ -1,0 +1,256 @@
+### Water Log Statistics API Tests
+### ทดสอบ Water Log Statistics Endpoints
+
+@base_url = http://localhost:8080
+@jwt_token = your_jwt_token_here
+
+### ============================================
+### 1. AUTHENTICATION - Get JWT Token
+### ============================================
+
+POST {{base_url}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "password123"
+}
+
+### ============================================
+### 2. CREATE SAMPLE WATER LOGS (for testing)
+### ============================================
+
+### Create Morning Water Log
+POST {{base_url}}/water-logs
+Authorization: Bearer {{jwt_token}}
+Content-Type: application/json
+
+{
+  "amount_ml": 250,
+  "drink_type": "water",
+  "notes": "Morning hydration",
+  "consumed_at": "2024-01-15T07:00:00Z"
+}
+
+### Create Coffee Log
+POST {{base_url}}/water-logs
+Authorization: Bearer {{jwt_token}}
+Content-Type: application/json
+
+{
+  "amount_ml": 200,
+  "drink_type": "coffee",
+  "notes": "Morning coffee",
+  "consumed_at": "2024-01-15T08:30:00Z"
+}
+
+### Create Lunch Water Log
+POST {{base_url}}/water-logs
+Authorization: Bearer {{jwt_token}}
+Content-Type: application/json
+
+{
+  "amount_ml": 300,
+  "drink_type": "water",
+  "notes": "Water with lunch",
+  "consumed_at": "2024-01-15T12:00:00Z"
+}
+
+### Create Afternoon Water Log
+POST {{base_url}}/water-logs
+Authorization: Bearer {{jwt_token}}
+Content-Type: application/json
+
+{
+  "amount_ml": 400,
+  "drink_type": "water",
+  "notes": "Afternoon hydration",
+  "consumed_at": "2024-01-15T15:30:00Z"
+}
+
+### Create Evening Water Log
+POST {{base_url}}/water-logs
+Authorization: Bearer {{jwt_token}}
+Content-Type: application/json
+
+{
+  "amount_ml": 250,
+  "drink_type": "water",
+  "notes": "Evening water",
+  "consumed_at": "2024-01-15T19:00:00Z"
+}
+
+### ============================================
+### 3. DAILY WATER STATS TESTS
+### ============================================
+
+### Test Daily Stats - 2024-01-15
+GET {{base_url}}/water-logs/stats/daily?date=2024-01-15
+Authorization: Bearer {{jwt_token}}
+
+### Test Daily Stats - Today
+GET {{base_url}}/water-logs/stats/daily?date=2024-01-20
+Authorization: Bearer {{jwt_token}}
+
+### Test Daily Stats - Yesterday
+GET {{base_url}}/water-logs/stats/daily?date=2024-01-19
+Authorization: Bearer {{jwt_token}}
+
+### ============================================
+### 4. WEEKLY WATER STATS TESTS
+### ============================================
+
+### Test Weekly Stats - Week of Jan 8-14, 2024
+GET {{base_url}}/water-logs/stats/weekly?start_date=2024-01-08&end_date=2024-01-14
+Authorization: Bearer {{jwt_token}}
+
+### Test Weekly Stats - Current Week
+GET {{base_url}}/water-logs/stats/weekly?start_date=2024-01-15&end_date=2024-01-21
+Authorization: Bearer {{jwt_token}}
+
+### Test Weekly Stats - Last Week
+GET {{base_url}}/water-logs/stats/weekly?start_date=2024-01-01&end_date=2024-01-07
+Authorization: Bearer {{jwt_token}}
+
+### ============================================
+### 5. ADDITIONAL STATS ENDPOINTS
+### ============================================
+
+### Get Today's Water Progress
+GET {{base_url}}/water-logs/progress/today
+Authorization: Bearer {{jwt_token}}
+
+### Get Daily Water Goal
+GET {{base_url}}/water-logs/goals/daily
+Authorization: Bearer {{jwt_token}}
+
+### Set Daily Water Goal
+POST {{base_url}}/water-logs/goals/daily
+Authorization: Bearer {{jwt_token}}
+Content-Type: application/json
+
+{
+  "daily_goal_ml": 2000,
+  "notes": "Recommended daily intake"
+}
+
+### Get Water Consumption Trends (30 days)
+GET {{base_url}}/water-logs/trends/consumption?days=30
+Authorization: Bearer {{jwt_token}}
+
+### Get Hydration Insights
+GET {{base_url}}/water-logs/insights/hydration
+Authorization: Bearer {{jwt_token}}
+
+### ============================================
+### 6. ERROR HANDLING TESTS
+### ============================================
+
+### Test Invalid Date Format
+GET {{base_url}}/water-logs/stats/daily?date=invalid-date
+Authorization: Bearer {{jwt_token}}
+
+### Test Missing Date Parameter
+GET {{base_url}}/water-logs/stats/daily
+Authorization: Bearer {{jwt_token}}
+
+### Test Invalid Date Range
+GET {{base_url}}/water-logs/stats/weekly?start_date=2024-01-14&end_date=2024-01-08
+Authorization: Bearer {{jwt_token}}
+
+### Test Without Authentication
+GET {{base_url}}/water-logs/stats/daily?date=2024-01-15
+
+### ============================================
+### 7. BULK DATA CREATION (for comprehensive testing)
+### ============================================
+
+### Create multiple logs for different dates
+### Day 1 - 2024-01-08
+POST {{base_url}}/water-logs
+Authorization: Bearer {{jwt_token}}
+Content-Type: application/json
+
+{
+  "amount_ml": 500,
+  "drink_type": "water",
+  "notes": "Day 1 - Morning",
+  "consumed_at": "2024-01-08T08:00:00Z"
+}
+
+POST {{base_url}}/water-logs
+Authorization: Bearer {{jwt_token}}
+Content-Type: application/json
+
+{
+  "amount_ml": 300,
+  "drink_type": "water",
+  "notes": "Day 1 - Afternoon",
+  "consumed_at": "2024-01-08T14:00:00Z"
+}
+
+### Day 2 - 2024-01-09
+POST {{base_url}}/water-logs
+Authorization: Bearer {{jwt_token}}
+Content-Type: application/json
+
+{
+  "amount_ml": 400,
+  "drink_type": "water",
+  "notes": "Day 2 - Morning",
+  "consumed_at": "2024-01-09T09:00:00Z"
+}
+
+POST {{base_url}}/water-logs
+Authorization: Bearer {{jwt_token}}
+Content-Type: application/json
+
+{
+  "amount_ml": 600,
+  "drink_type": "water",
+  "notes": "Day 2 - Evening",
+  "consumed_at": "2024-01-09T18:00:00Z"
+}
+
+### Day 3 - 2024-01-10
+POST {{base_url}}/water-logs
+Authorization: Bearer {{jwt_token}}
+Content-Type: application/json
+
+{
+  "amount_ml": 350,
+  "drink_type": "water",
+  "notes": "Day 3 - Morning",
+  "consumed_at": "2024-01-10T07:30:00Z"
+}
+
+POST {{base_url}}/water-logs
+Authorization: Bearer {{jwt_token}}
+Content-Type: application/json
+
+{
+  "amount_ml": 450,
+  "drink_type": "water",
+  "notes": "Day 3 - Afternoon",
+  "consumed_at": "2024-01-10T15:00:00Z"
+}
+
+### ============================================
+### 8. FINAL STATS VERIFICATION
+### ============================================
+
+### Verify Daily Stats for 2024-01-08
+GET {{base_url}}/water-logs/stats/daily?date=2024-01-08
+Authorization: Bearer {{jwt_token}}
+
+### Verify Daily Stats for 2024-01-09
+GET {{base_url}}/water-logs/stats/daily?date=2024-01-09
+Authorization: Bearer {{jwt_token}}
+
+### Verify Daily Stats for 2024-01-10
+GET {{base_url}}/water-logs/stats/daily?date=2024-01-10
+Authorization: Bearer {{jwt_token}}
+
+### Verify Weekly Stats for the created data
+GET {{base_url}}/water-logs/stats/weekly?start_date=2024-01-08&end_date=2024-01-14
+Authorization: Bearer {{jwt_token}}

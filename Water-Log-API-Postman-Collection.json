@@ -1,0 +1,540 @@
+{
+  "info": {
+    "name": "VITA WISE AI - Water Log API",
+    "description": "Complete API collection for water logging functionality including CRUD operations, statistics, goals, and insights",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "your_jwt_token_here",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login to get JWT Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login to get JWT token for authentication"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Water Log CRUD Operations",
+      "item": [
+        {
+          "name": "Create Water Log",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount_ml\": 250,\n  \"drink_type\": \"water\",\n  \"notes\": \"Morning hydration\",\n  \"consumed_at\": \"2024-01-15T08:30:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/water-logs",
+              "host": ["{{base_url}}"],
+              "path": ["water-logs"]
+            },
+            "description": "Create a new water log entry"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Water Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/water-logs",
+              "host": ["{{base_url}}"],
+              "path": ["water-logs"]
+            },
+            "description": "Get all water logs for the authenticated user"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Water Logs with Query Parameters",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/water-logs?start_date=2024-01-01&end_date=2024-01-31&drink_type=water&limit=20&offset=0",
+              "host": ["{{base_url}}"],
+              "path": ["water-logs"],
+              "query": [
+                {
+                  "key": "start_date",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "end_date",
+                  "value": "2024-01-31"
+                },
+                {
+                  "key": "drink_type",
+                  "value": "water"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "Get water logs with filtering and pagination"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Water Log by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/water-logs/1",
+              "host": ["{{base_url}}"],
+              "path": ["water-logs", "1"]
+            },
+            "description": "Get a specific water log by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Water Log",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount_ml\": 300,\n  \"notes\": \"Updated - larger glass\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/water-logs/1",
+              "host": ["{{base_url}}"],
+              "path": ["water-logs", "1"]
+            },
+            "description": "Update an existing water log"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Water Log",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/water-logs/1",
+              "host": ["{{base_url}}"],
+              "path": ["water-logs", "1"]
+            },
+            "description": "Delete a water log entry"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Water Statistics",
+      "item": [
+        {
+          "name": "Get Daily Water Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/water-logs/stats/daily?date=2024-01-15",
+              "host": ["{{base_url}}"],
+              "path": ["water-logs", "stats", "daily"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2024-01-15"
+                }
+              ]
+            },
+            "description": "Get daily water consumption statistics"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Weekly Water Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/water-logs/stats/weekly?start_date=2024-01-08&end_date=2024-01-14",
+              "host": ["{{base_url}}"],
+              "path": ["water-logs", "stats", "weekly"],
+              "query": [
+                {
+                  "key": "start_date",
+                  "value": "2024-01-08"
+                },
+                {
+                  "key": "end_date",
+                  "value": "2024-01-14"
+                }
+              ]
+            },
+            "description": "Get weekly water consumption statistics"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Water Goals",
+      "item": [
+        {
+          "name": "Get Daily Water Goal",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/water-logs/goals/daily",
+              "host": ["{{base_url}}"],
+              "path": ["water-logs", "goals", "daily"]
+            },
+            "description": "Get user's daily water goal"
+          },
+          "response": []
+        },
+        {
+          "name": "Set Daily Water Goal",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"daily_goal_ml\": 2000,\n  \"notes\": \"Recommended daily intake\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/water-logs/goals/daily",
+              "host": ["{{base_url}}"],
+              "path": ["water-logs", "goals", "daily"]
+            },
+            "description": "Set or update daily water goal"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Water Progress & Trends",
+      "item": [
+        {
+          "name": "Get Today's Water Progress",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/water-logs/progress/today",
+              "host": ["{{base_url}}"],
+              "path": ["water-logs", "progress", "today"]
+            },
+            "description": "Get today's water consumption progress"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Water Consumption Trends",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/water-logs/trends/consumption?days=30",
+              "host": ["{{base_url}}"],
+              "path": ["water-logs", "trends", "consumption"],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "30"
+                }
+              ]
+            },
+            "description": "Get water consumption trends over specified days"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Water Insights",
+      "item": [
+        {
+          "name": "Get Hydration Insights",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/water-logs/insights/hydration",
+              "host": ["{{base_url}}"],
+              "path": ["water-logs", "insights", "hydration"]
+            },
+            "description": "Get AI-powered hydration insights and recommendations"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Sample Data Creation",
+      "item": [
+        {
+          "name": "Create Sample Water Logs - Morning",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount_ml\": 250,\n  \"drink_type\": \"water\",\n  \"notes\": \"Morning glass of water\",\n  \"consumed_at\": \"2024-01-15T07:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/water-logs",
+              "host": ["{{base_url}}"],
+              "path": ["water-logs"]
+            },
+            "description": "Create morning water log entry"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Sample Water Logs - Coffee",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount_ml\": 200,\n  \"drink_type\": \"coffee\",\n  \"notes\": \"Morning coffee\",\n  \"consumed_at\": \"2024-01-15T08:30:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/water-logs",
+              "host": ["{{base_url}}"],
+              "path": ["water-logs"]
+            },
+            "description": "Create coffee log entry"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Sample Water Logs - Lunch",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount_ml\": 300,\n  \"drink_type\": \"water\",\n  \"notes\": \"Water with lunch\",\n  \"consumed_at\": \"2024-01-15T12:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/water-logs",
+              "host": ["{{base_url}}"],
+              "path": ["water-logs"]
+            },
+            "description": "Create lunch water log entry"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Sample Water Logs - Afternoon",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount_ml\": 400,\n  \"drink_type\": \"water\",\n  \"notes\": \"Afternoon hydration\",\n  \"consumed_at\": \"2024-01-15T15:30:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/water-logs",
+              "host": ["{{base_url}}"],
+              "path": ["water-logs"]
+            },
+            "description": "Create afternoon water log entry"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Sample Water Logs - Evening",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount_ml\": 250,\n  \"drink_type\": \"water\",\n  \"notes\": \"Evening water\",\n  \"consumed_at\": \"2024-01-15T19:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/water-logs",
+              "host": ["{{base_url}}"],
+              "path": ["water-logs"]
+            },
+            "description": "Create evening water log entry"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

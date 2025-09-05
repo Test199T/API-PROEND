@@ -664,7 +664,7 @@ export class SupabaseService implements OnModuleInit {
 
     const { data, error } = await this.supabase
       .from('water_log')
-      .select('amount, consumed_at')
+      .select('amount_ml, consumed_at')
       .eq('user_id', numericUserId)
       .gte('consumed_at', `${date}T00:00:00`)
       .lt('consumed_at', `${date}T23:59:59`);
@@ -672,7 +672,7 @@ export class SupabaseService implements OnModuleInit {
     if (error) throw error;
 
     const totalAmount =
-      data?.reduce((sum, log) => sum + (log.amount || 0), 0) || 0;
+      data?.reduce((sum, log) => sum + (log.amount_ml || 0), 0) || 0;
     const goal = await this.getDailyWaterGoal(numericUserId);
 
     return {
@@ -697,7 +697,7 @@ export class SupabaseService implements OnModuleInit {
 
     const { data, error } = await this.supabase
       .from('water_log')
-      .select('amount, consumed_at')
+      .select('amount_ml, consumed_at')
       .eq('user_id', numericUserId)
       .gte('consumed_at', `${startDate}T00:00:00`)
       .lte('consumed_at', `${endDate}T23:59:59`)
@@ -713,7 +713,7 @@ export class SupabaseService implements OnModuleInit {
           if (!acc[date]) {
             acc[date] = { date, totalAmount: 0, logCount: 0 };
           }
-          acc[date].totalAmount += log.amount || 0;
+          acc[date].totalAmount += log.amount_ml || 0;
           acc[date].logCount += 1;
           return acc;
         },
@@ -744,25 +744,39 @@ export class SupabaseService implements OnModuleInit {
   // Water Goals and Progress
   async getDailyWaterGoal(userId: number) {
     const { data, error } = await this.supabase
-      .from('user_preferences')
-      .select('daily_water_goal')
-      .eq('user_id', userId)
+      .from('users')
+      .select('daily_behavior')
+      .eq('id', userId)
       .single();
 
     if (error) throw error;
-    return data?.daily_water_goal || 2000; // Default to 2000ml if not set
+    return data?.daily_behavior?.daily_water_goal_ml || 2000; // Default to 2000ml if not set
   }
 
   async setDailyWaterGoal(userId: number, goalDto: any) {
+    // First get current daily_behavior
+    const { data: currentData, error: fetchError } = await this.supabase
+      .from('users')
+      .select('daily_behavior')
+      .eq('id', userId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    // Update daily_behavior with new water goal
+    const updatedDailyBehavior = {
+      ...currentData?.daily_behavior,
+      daily_water_goal_ml: goalDto.daily_goal_ml || goalDto.daily_water_goal_ml,
+    };
+
     const { data, error } = await this.supabase
-      .from('user_preferences')
-      .upsert({
-        user_id: userId,
-        daily_water_goal: goalDto.daily_water_goal,
+      .from('users')
+      .update({
+        daily_behavior: updatedDailyBehavior,
         updated_at: new Date().toISOString(),
       })
-      .select()
-      .single();
+      .eq('id', userId)
+      .select();
 
     if (error) throw error;
     return data;
@@ -773,7 +787,7 @@ export class SupabaseService implements OnModuleInit {
 
     const { data, error } = await this.supabase
       .from('water_log')
-      .select('amount')
+      .select('amount_ml')
       .eq('user_id', userId)
       .gte('consumed_at', `${today}T00:00:00`)
       .lt('consumed_at', `${today}T23:59:59`);
@@ -781,7 +795,7 @@ export class SupabaseService implements OnModuleInit {
     if (error) throw error;
 
     const totalAmount =
-      data?.reduce((sum, log) => sum + (log.amount || 0), 0) || 0;
+      data?.reduce((sum, log) => sum + (log.amount_ml || 0), 0) || 0;
     const goal = await this.getDailyWaterGoal(userId);
 
     return {
@@ -799,7 +813,7 @@ export class SupabaseService implements OnModuleInit {
 
     const { data, error } = await this.supabase
       .from('water_log')
-      .select('consumed_at, amount')
+      .select('consumed_at, amount_ml')
       .eq('user_id', userId)
       .gte('consumed_at', startDate.toISOString())
       .lte('consumed_at', endDate.toISOString())
@@ -812,15 +826,15 @@ export class SupabaseService implements OnModuleInit {
       data?.reduce(
         (acc, log) => {
           const date = log.consumed_at.split('T')[0];
-          acc[date] = (acc[date] || 0) + (log.amount || 0);
+          acc[date] = (acc[date] || 0) + (log.amount_ml || 0);
           return acc;
         },
         {} as Record<string, number>,
       ) || {};
 
-    return Object.entries(dailyTotals).map(([date, amount]) => ({
+    return Object.entries(dailyTotals).map(([date, amount_ml]) => ({
       date,
-      amount,
+      amount_ml,
     }));
   }
 
@@ -833,14 +847,14 @@ export class SupabaseService implements OnModuleInit {
     // Get today's and yesterday's water consumption
     const { data: todayData, error: todayError } = await this.supabase
       .from('water_log')
-      .select('amount')
+      .select('amount_ml')
       .eq('user_id', userId)
       .gte('consumed_at', `${today}T00:00:00`)
       .lt('consumed_at', `${today}T23:59:59`);
 
     const { data: yesterdayData, error: yesterdayError } = await this.supabase
       .from('water_log')
-      .select('amount')
+      .select('amount_ml')
       .eq('user_id', userId)
       .gte('consumed_at', `${yesterdayStr}T00:00:00`)
       .lt('consumed_at', `${yesterdayStr}T23:59:59`);
@@ -848,9 +862,9 @@ export class SupabaseService implements OnModuleInit {
     if (todayError || yesterdayError) throw todayError || yesterdayError;
 
     const todayTotal =
-      todayData?.reduce((sum, log) => sum + (log.amount || 0), 0) || 0;
+      todayData?.reduce((sum, log) => sum + (log.amount_ml || 0), 0) || 0;
     const yesterdayTotal =
-      yesterdayData?.reduce((sum, log) => sum + (log.amount || 0), 0) || 0;
+      yesterdayData?.reduce((sum, log) => sum + (log.amount_ml || 0), 0) || 0;
     const goal = await this.getDailyWaterGoal(userId);
 
     const insights = {
