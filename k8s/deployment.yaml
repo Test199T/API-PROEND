@@ -1,0 +1,111 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vita-wise-api
+  namespace: vita-wise
+  labels:
+    app: vita-wise-api
+    version: v1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: vita-wise-api
+  template:
+    metadata:
+      labels:
+        app: vita-wise-api
+        version: v1
+    spec:
+      containers:
+        - name: vita-wise-api
+          image: vita-wise-api:latest # Replace with your image registry
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: vita-wise-config
+                  key: NODE_ENV
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: vita-wise-config
+                  key: PORT
+            - name: JWT_EXPIRES_IN
+              valueFrom:
+                configMapKeyRef:
+                  name: vita-wise-config
+                  key: JWT_EXPIRES_IN
+            - name: OPENROUTER_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: vita-wise-config
+                  key: OPENROUTER_BASE_URL
+            - name: OPENROUTER_MODEL
+              valueFrom:
+                configMapKeyRef:
+                  name: vita-wise-config
+                  key: OPENROUTER_MODEL
+            - name: SUPABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: vita-wise-secrets
+                  key: SUPABASE_URL
+            - name: SUPABASE_ANON_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: vita-wise-secrets
+                  key: SUPABASE_ANON_KEY
+            - name: SUPABASE_SERVICE_ROLE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: vita-wise-secrets
+                  key: SUPABASE_SERVICE_ROLE_KEY
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: vita-wise-secrets
+                  key: JWT_SECRET
+            - name: OPENROUTER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: vita-wise-secrets
+                  key: OPENROUTER_API_KEY
+          resources:
+            requests:
+              memory: '512Mi'
+              cpu: '250m'
+            limits:
+              memory: '1Gi'
+              cpu: '500m'
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+      restartPolicy: Always
+      securityContext:
+        fsGroup: 1001

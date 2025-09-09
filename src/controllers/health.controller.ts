@@ -50,6 +50,38 @@ export class HealthController {
     return health;
   }
 
+  @Get('ready')
+  async readinessCheck() {
+    // Readiness check - ตรวจสอบว่าพร้อมรับ traffic หรือไม่
+    const readiness = {
+      status: 'ready',
+      timestamp: new Date().toISOString(),
+    };
+
+    try {
+      // ตรวจสอบการเชื่อมต่อฐานข้อมูล
+      await this.supabaseService.healthCheck();
+      return readiness;
+    } catch (error) {
+      this.logger.error('Readiness check failed', error);
+      return {
+        status: 'not ready',
+        timestamp: new Date().toISOString(),
+        error: error.message,
+      };
+    }
+  }
+
+  @Get('live')
+  async livenessCheck() {
+    // Liveness check - ตรวจสอบว่า application ยังทำงานอยู่หรือไม่
+    return {
+      status: 'alive',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+    };
+  }
+
   @Get('detailed')
   async detailedHealthCheck() {
     const detailedHealth = {
