@@ -1,0 +1,88 @@
+### Water Log API Test File
+### Base URL: http://localhost:3000/api
+
+### 1. Health Check
+GET http://localhost:3000/api/health
+
+### 2. Login to get JWT token
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "watertest@gmail.com",
+  "password": "adwawdasd"
+}
+
+### 3. Create Water Log (replace {{jwt_token}} with actual token)
+POST http://localhost:3000/api/water-logs
+Content-Type: application/json
+Authorization: Bearer {{jwt_token}}
+
+{
+  "amount_ml": 250,
+  "drink_type": "water",
+  "notes": "Morning water"
+}
+
+### 4. Create Water Log with specific time
+POST http://localhost:3000/api/water-logs
+Content-Type: application/json
+Authorization: Bearer {{jwt_token}}
+
+{
+  "amount_ml": 500,
+  "drink_type": "water",
+  "consumed_at": "2025-09-09T10:30:00Z",
+  "notes": "After workout"
+}
+
+### 5. Get All Water Logs
+GET http://localhost:3000/api/water-logs
+Authorization: Bearer {{jwt_token}}
+
+### 6. Get Daily Stats
+GET http://localhost:3000/api/water-logs/stats/daily?date=2025-09-09
+Authorization: Bearer {{jwt_token}}
+
+### 7. Get Weekly Stats
+GET http://localhost:3000/api/water-logs/stats/weekly?start_date=2025-09-03&end_date=2025-09-09
+Authorization: Bearer {{jwt_token}}
+
+### 8. Get Today's Progress
+GET http://localhost:3000/api/water-logs/progress/today
+Authorization: Bearer {{jwt_token}}
+
+### 9. Set Daily Water Goal
+POST http://localhost:3000/api/water-logs/goals/daily
+Content-Type: application/json
+Authorization: Bearer {{jwt_token}}
+
+{
+  "daily_goal_ml": 2500
+}
+
+### 10. Get Daily Water Goal
+GET http://localhost:3000/api/water-logs/goals/daily
+Authorization: Bearer {{jwt_token}}
+
+### 11. Get Water Consumption Trends
+GET http://localhost:3000/api/water-logs/trends/consumption?days=7
+Authorization: Bearer {{jwt_token}}
+
+### 12. Get Hydration Insights
+GET http://localhost:3000/api/water-logs/insights/hydration
+Authorization: Bearer {{jwt_token}}
+
+### 13. Update Water Log (replace {{log_id}} with actual ID)
+PUT http://localhost:3000/api/water-logs/{{log_id}}
+Content-Type: application/json
+Authorization: Bearer {{jwt_token}}
+
+{
+  "amount_ml": 300,
+  "notes": "Updated amount"
+}
+
+### 14. Delete Water Log (replace {{log_id}} with actual ID)
+DELETE http://localhost:3000/api/water-logs/{{log_id}}
+Authorization: Bearer {{jwt_token}}

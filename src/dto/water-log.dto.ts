@@ -27,6 +27,10 @@ export class CreateWaterLogDto {
   @Min(0)
   @Max(10)
   hydration_level?: number; // 0-10 scale
+
+  @IsOptional()
+  @IsDateString()
+  consumed_at?: string; // ISO date string
 }
 
 export class UpdateWaterLogDto {

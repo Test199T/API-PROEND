@@ -38,6 +38,7 @@ export class WaterLogController {
       const waterLog = await this.supabaseService.createWaterLog({
         ...createWaterLogDto,
         user_id: userId,
+        consumed_at: createWaterLogDto.consumed_at || new Date().toISOString(),
       });
 
       return ResponseDto.success(waterLog, 'Water log created successfully');
