@@ -40,24 +40,6 @@ services:
     networks:
       - vita-wise-network
 
-  # Nginx reverse proxy (optional)
-  nginx:
-    image: nginx:alpine
-    container_name: vita-wise-nginx
-    ports:
-      - '80:80'
-      - '443:443'
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./ssl:/etc/nginx/ssl:ro
-    depends_on:
-      - api
-    restart: unless-stopped
-    networks:
-      - vita-wise-network
-    profiles:
-      - nginx
-
 networks:
   vita-wise-network:
     driver: bridge

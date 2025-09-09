@@ -37,20 +37,21 @@ case $CLEANUP_TYPE in
         echo -e "${GREEN}✅ Docker cleanup completed!${NC}"
         ;;
         
-    "k8s")
-        echo -e "${BLUE}☸️  Cleaning up Kubernetes resources...${NC}"
+    "jenkins")
+        echo -e "${BLUE}🔧 Cleaning up Jenkins resources...${NC}"
         
-        # Check if kubectl is available
-        if ! command -v kubectl &> /dev/null; then
-            echo -e "${RED}❌ kubectl is not installed${NC}"
-            exit 1
-        fi
+        # Clean Jenkins workspace
+        echo -e "${BLUE}🗑️  Cleaning Jenkins workspace...${NC}"
+        rm -rf .jenkins/ || true
+        rm -rf jenkins/workspace/ || true
         
-        # Delete resources
-        echo -e "${BLUE}🗑️  Deleting Kubernetes resources...${NC}"
-        kubectl delete namespace ${NAMESPACE} --ignore-not-found=true
+        # Clean build artifacts
+        echo -e "${BLUE}🧹 Cleaning build artifacts...${NC}"
+        rm -rf dist/ || true
+        rm -rf coverage/ || true
+        rm -rf node_modules/ || true
         
-        echo -e "${GREEN}✅ Kubernetes cleanup completed!${NC}"
+        echo -e "${GREEN}✅ Jenkins cleanup completed!${NC}"
         ;;
         
     "images")
@@ -77,11 +78,12 @@ case $CLEANUP_TYPE in
         docker container prune -f
         docker volume prune -f
         
-        # Kubernetes cleanup
-        if command -v kubectl &> /dev/null; then
-            echo -e "${BLUE}☸️  Kubernetes cleanup...${NC}"
-            kubectl delete namespace ${NAMESPACE} --ignore-not-found=true
-        fi
+        # Jenkins cleanup
+        echo -e "${BLUE}🔧 Jenkins cleanup...${NC}"
+        rm -rf .jenkins/ || true
+        rm -rf jenkins/workspace/ || true
+        rm -rf dist/ || true
+        rm -rf coverage/ || true
         
         # Image cleanup
         echo -e "${BLUE}🖼️  Image cleanup...${NC}"
@@ -93,7 +95,7 @@ case $CLEANUP_TYPE in
         
     *)
         echo -e "${RED}❌ Invalid cleanup type: ${CLEANUP_TYPE}${NC}"
-        echo -e "${YELLOW}Usage: $0 [docker|k8s|images|all]${NC}"
+        echo -e "${YELLOW}Usage: $0 [docker|jenkins|images|all]${NC}"
         exit 1
         ;;
 esac

@@ -12,30 +12,34 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
   // Enable CORS
+  const allowedOrigins = process.env.ALLOWED_ORIGINS 
+    ? process.env.ALLOWED_ORIGINS.split(',')
+    : ['http://localhost:8080', 'http://localhost:5173'];
+    
   app.enableCors({
-    origin: ['http://localhost:8080', 'http://localhost:5173'],
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Origin', 'Content-Type', 'Accept', 'Authorization'],
     credentials: true,
   });
 
-  // Enable validation pipe (ปิดชั่วคราวเพื่อทดสอบ)
-  // app.useGlobalPipes(
-  //   new ValidationPipe({
-  //     whitelist: true,
-  //     forbidNonWhitelisted: false,
-  //     transform: true,
-  //     transformOptions: {
-  //       enableImplicitConversion: true,
-  //     },
-  //   }),
-  // );
+  // Enable validation pipe
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: false,
+      transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+    }),
+  );
 
   // Global exception filter
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  // Remove global prefix to keep original routes
-  // app.setGlobalPrefix('api');
+  // Set global prefix for API routes
+  app.setGlobalPrefix('api');
 
   const port = process.env.PORT || 8080;
   await app.listen(port);

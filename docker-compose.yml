@@ -31,7 +31,8 @@ services:
   api-dev:
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
+      target: builder
     container_name: vita-wise-api-dev
     ports:
       - '3000:3000'

@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: vita-wise
-  labels:
-    name: vita-wise
-    app: vita-wise-api

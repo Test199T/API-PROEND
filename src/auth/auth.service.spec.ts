@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigModule } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { UnauthorizedException, BadRequestException } from '@nestjs/common';
 
@@ -7,6 +8,7 @@ describe('AuthService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      imports: [ConfigModule.forRoot()],
       providers: [AuthService],
     }).compile();
 
@@ -26,15 +28,15 @@ describe('AuthService', () => {
         lastName: 'Doe',
       };
 
-      // Mock Supabase to return an error
-      jest.spyOn(service as any, 'supabase').mockReturnValue({
+      // Mock the supabase property
+      (service as any).supabase = {
         auth: {
           signUp: jest.fn().mockResolvedValue({
             data: null,
             error: { message: 'User already exists' },
           }),
         },
-      });
+      };
 
       await expect(service.register(registerDto)).rejects.toThrow(
         BadRequestException,
@@ -49,15 +51,15 @@ describe('AuthService', () => {
         password: 'wrongpassword',
       };
 
-      // Mock Supabase to return an error
-      jest.spyOn(service as any, 'supabase').mockReturnValue({
+      // Mock the supabase property
+      (service as any).supabase = {
         auth: {
           signInWithPassword: jest.fn().mockResolvedValue({
             data: null,
             error: { message: 'Invalid credentials' },
           }),
         },
-      });
+      };
 
       await expect(service.login(loginDto)).rejects.toThrow(
         UnauthorizedException,

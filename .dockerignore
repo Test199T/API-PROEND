@@ -1,6 +1,15 @@
 # Dependencies
 node_modules
 npm-debug.log*
+yarn-error.log
+
+# Jenkins
+jenkins/
+.jenkins/
+
+# Nginx (not used)
+nginx.conf
+ssl/
 
 # Build outputs
 dist

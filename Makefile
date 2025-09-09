@@ -36,8 +36,7 @@ format: ## Format code
 
 # Docker commands
 docker:build: ## Build Docker image
-	@chmod +x scripts/build.sh
-	./scripts/build.sh
+	docker build -t vita-wise-api:latest .
 
 docker:dev: ## Start development with Docker
 	docker-compose --profile dev up --build
@@ -45,32 +44,37 @@ docker:dev: ## Start development with Docker
 docker:prod: ## Start production with Docker
 	docker-compose -f docker-compose.prod.yml up --build -d
 
+docker:staging: ## Start staging with Docker
+	docker-compose -f docker-compose.staging.yml up --build -d
+
 docker:stop: ## Stop Docker containers
 	docker-compose down
 	docker-compose -f docker-compose.prod.yml down
+	docker-compose -f docker-compose.staging.yml down
 
 docker:logs: ## Show Docker logs
 	docker-compose logs -f
 
-# Kubernetes commands
-k8s:deploy: ## Deploy to Kubernetes
-	@chmod +x scripts/deploy-k8s.sh
-	./scripts/deploy-k8s.sh
+# Jenkins commands
+jenkins:build: ## Build with Jenkins
+	@chmod +x scripts/build-jenkins.sh
+	./scripts/build-jenkins.sh
 
-k8s:deploy:ingress: ## Deploy to Kubernetes with Ingress
-	@chmod +x scripts/deploy-k8s.sh
-	./scripts/deploy-k8s.sh latest your-registry.com ingress
+jenkins:test: ## Run tests with Jenkins
+	@chmod +x scripts/test-jenkins.sh
+	./scripts/test-jenkins.sh
 
-k8s:status: ## Check Kubernetes deployment status
-	kubectl get pods -n vita-wise
-	kubectl get services -n vita-wise
-	kubectl get ingress -n vita-wise
+jenkins:deploy: ## Deploy with Jenkins
+	@chmod +x scripts/deploy-jenkins.sh
+	./scripts/deploy-jenkins.sh
 
-k8s:logs: ## Show Kubernetes logs
-	kubectl logs -f deployment/vita-wise-api -n vita-wise
+jenkins:deploy:staging: ## Deploy to staging with Jenkins
+	@chmod +x scripts/deploy-jenkins.sh
+	./scripts/deploy-jenkins.sh staging
 
-k8s:scale: ## Scale deployment (usage: make k8s:scale REPLICAS=3)
-	kubectl scale deployment vita-wise-api --replicas=$(REPLICAS) -n vita-wise
+jenkins:deploy:prod: ## Deploy to production with Jenkins
+	@chmod +x scripts/deploy-jenkins.sh
+	./scripts/deploy-jenkins.sh production
 
 # Cleanup commands
 clean: ## Clean up all resources
@@ -81,9 +85,9 @@ clean:docker: ## Clean up Docker resources
 	@chmod +x scripts/cleanup.sh
 	./scripts/cleanup.sh docker
 
-clean:k8s: ## Clean up Kubernetes resources
+clean:jenkins: ## Clean up Jenkins resources
 	@chmod +x scripts/cleanup.sh
-	./scripts/cleanup.sh k8s
+	./scripts/cleanup.sh jenkins
 
 clean:images: ## Clean up Docker images
 	@chmod +x scripts/cleanup.sh
@@ -104,14 +108,14 @@ setup: ## Initial setup
 	@cp env.example .env.production
 	@echo "✅ Setup completed!"
 	@echo "📝 Please update .env.development and .env.production with your values"
-	@echo "🔧 Update k8s/secret.yaml with your base64 encoded secrets"
+	@echo "🔧 Update Jenkins credentials in Jenkins UI"
 
 # Production deployment
 deploy:prod: ## Full production deployment
 	@echo "🚀 Starting production deployment..."
 	@make build
 	@make docker:build
-	@make k8s:deploy
+	@make jenkins:deploy:prod
 	@echo "✅ Production deployment completed!"
 
 # Development deployment
