@@ -47,7 +47,10 @@ export interface AIChatRequest {
 export class AIServiceController {
   private readonly logger = new Logger(AIServiceController.name);
   private readonly requestCache = new Map<string, { timestamp: number; result: any }>();
-  private readonly CACHE_DURATION = 30000; // 30 seconds
+  private readonly CACHE_DURATION = 0; // ปิด cache (0 = ไม่ใช้ cache)
+  private readonly rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+  private readonly RATE_LIMIT = 5; // 5 requests per minute
+  private readonly RATE_WINDOW = 60000; // 1 minute
 
   constructor(private readonly aiService: AIService) {}
 
@@ -71,12 +74,41 @@ export class AIServiceController {
         };
       }
 
+      // ตรวจสอบ rate limit
+      const rateLimitKey = `rate_${request.userId}`;
+      const now = Date.now();
+      const rateLimit = this.rateLimitMap.get(rateLimitKey);
+      
+      if (rateLimit) {
+        if (now < rateLimit.resetTime) {
+          if (rateLimit.count >= this.RATE_LIMIT) {
+            return {
+              success: false,
+              error: 'Too many requests. Please wait before trying again.',
+              timestamp: new Date().toISOString(),
+              retryAfter: Math.ceil((rateLimit.resetTime - now) / 1000),
+            };
+          }
+          rateLimit.count++;
+        } else {
+          this.rateLimitMap.set(rateLimitKey, { count: 1, resetTime: now + this.RATE_WINDOW });
+        }
+      } else {
+        this.rateLimitMap.set(rateLimitKey, { count: 1, resetTime: now + this.RATE_WINDOW });
+      }
+
       // ตรวจสอบ cache
       const cacheKey = `analyze_${request.userId}_${request.analysisType}_${request.timeframe}`;
       const cached = this.requestCache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
         this.logger.log(`Returning cached result for user ${request.userId}`);
-        return cached.result;
+        // เพิ่ม cache status ใน response
+        return {
+          ...cached.result,
+          fromCache: true,
+          cacheTimestamp: cached.timestamp,
+          cacheAge: Date.now() - cached.timestamp
+        };
       }
 
       this.logger.log(`AI Health Analysis requested for user ${request.userId}`, {

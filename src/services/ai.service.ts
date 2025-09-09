@@ -53,11 +53,13 @@ export class AIService {
       // ใช้ OpenRouter AI วิเคราะห์ข้อมูล
       let aiAnalysis: string;
       try {
+        this.logger.log(`Calling OpenRouter AI for user ${userId} - Health Analysis`);
         aiAnalysis = await this.openRouterService.analyzeHealthData(
           userData,
           healthData,
           'การวิเคราะห์สุขภาพโดยรวม',
         );
+        this.logger.log(`OpenRouter AI completed for user ${userId} - Health Analysis`);
       } catch (aiError) {
         this.logger.warn(
           `AI analysis failed, using fallback: ${aiError.message}`,
@@ -71,8 +73,13 @@ export class AIService {
       return {
         user: userData,
         healthScores,
-        aiAnalysis,
-        recommendations: await this.generateAIRecommendations(userId),
+        aiAnalysis: [aiAnalysis], // เปลี่ยนเป็น array เพื่อให้ตรงกับหน้าบ้าน
+        recommendations: {
+          immediate: this.generateImmediateRecommendations(healthScores),
+          shortTerm: this.generateShortTermRecommendations(healthScores),
+          longTerm: this.generateLongTermRecommendations(healthScores)
+        },
+        healthAlerts: this.generateHealthAlerts(healthScores),
         timestamp: new Date().toISOString(),
       };
     } catch (error) {
@@ -82,6 +89,168 @@ export class AIService {
       );
       throw error;
     }
+  }
+
+  /**
+   * สร้างคำแนะนำเร่งด่วน (0-7 วัน)
+   */
+  private generateImmediateRecommendations(healthScores: any): Array<{
+    category: string;
+    recommendation: string;
+    reason: string;
+    impact: string;
+  }> {
+    const recommendations: Array<{
+      category: string;
+      recommendation: string;
+      reason: string;
+      impact: string;
+    }> = [];
+    
+    if (healthScores.sleepScore < 70) {
+      recommendations.push({
+        category: "Sleep",
+        recommendation: "เข้านอนก่อน 23:00 น. อย่างสม่ำเสมอ",
+        reason: "คุณภาพการนอนต่ำกว่ามาตรฐาน",
+        impact: "ปรับปรุงคุณภาพการนอน 25%"
+      });
+    }
+    
+    if (healthScores.nutritionScore < 70) {
+      recommendations.push({
+        category: "Nutrition",
+        recommendation: "เพิ่มโปรตีน 20g ต่อวัน",
+        reason: "โปรตีนไม่เพียงพอสำหรับการสร้างกล้ามเนื้อ",
+        impact: "เพิ่มมวลกล้ามเนื้อ 15%"
+      });
+    }
+    
+    if (healthScores.waterScore < 70) {
+      recommendations.push({
+        category: "Hydration",
+        recommendation: "ดื่มน้ำ 8-10 แก้วต่อวัน",
+        reason: "การดื่มน้ำไม่เพียงพอ",
+        impact: "ปรับปรุงสุขภาพโดยรวม 20%"
+      });
+    }
+    
+    return recommendations;
+  }
+
+  /**
+   * สร้างคำแนะนำระยะสั้น (1-4 สัปดาห์)
+   */
+  private generateShortTermRecommendations(healthScores: any): Array<{
+    category: string;
+    recommendation: string;
+    reason: string;
+    impact: string;
+  }> {
+    const recommendations: Array<{
+      category: string;
+      recommendation: string;
+      reason: string;
+      impact: string;
+    }> = [];
+    
+    if (healthScores.exerciseScore < 70) {
+      recommendations.push({
+        category: "Exercise",
+        recommendation: "ออกกำลังกาย 4 ครั้งต่อสัปดาห์",
+        reason: "ความถี่ในการออกกำลังกายไม่เพียงพอ",
+        impact: "เพิ่มความแข็งแรง 30%"
+      });
+    }
+    
+    if (healthScores.sleepScore < 70) {
+      recommendations.push({
+        category: "Stress Management",
+        recommendation: "ฝึกหายใจลึก 10 นาทีต่อวัน",
+        reason: "ระดับความเครียดสูงกว่าปกติ",
+        impact: "ลดความเครียด 40%"
+      });
+    }
+    
+    return recommendations;
+  }
+
+  /**
+   * สร้างคำแนะนำระยะยาว (1-3 เดือน)
+   */
+  private generateLongTermRecommendations(healthScores: any): Array<{
+    category: string;
+    recommendation: string;
+    reason: string;
+    impact: string;
+  }> {
+    const recommendations: Array<{
+      category: string;
+      recommendation: string;
+      reason: string;
+      impact: string;
+    }> = [];
+    
+    recommendations.push({
+      category: "Lifestyle",
+      recommendation: "สร้างกิจวัตรประจำวันที่สมดุล",
+      reason: "เพื่อการจัดการสุขภาพอย่างยั่งยืน",
+      impact: "ปรับปรุงคุณภาพชีวิต 50%"
+    });
+    
+    recommendations.push({
+      category: "Tracking",
+      recommendation: "ใช้ระบบติดตามสุขภาพอย่างสม่ำเสมอ",
+      reason: "เพื่อการปรับปรุงอย่างต่อเนื่อง",
+      impact: "เพิ่มประสิทธิภาพ 35%"
+    });
+    
+    return recommendations;
+  }
+
+  /**
+   * สร้าง Health Alerts
+   */
+  private generateHealthAlerts(healthScores: any): Array<{
+    type: string;
+    severity: 'low' | 'medium' | 'high';
+    message: string;
+    action: string;
+  }> {
+    const alerts: Array<{
+      type: string;
+      severity: 'low' | 'medium' | 'high';
+      message: string;
+      action: string;
+    }> = [];
+    
+    if (healthScores.sleepScore < 60) {
+      alerts.push({
+        type: "Sleep",
+        severity: "medium",
+        message: "คุณภาพการนอนต่ำกว่ามาตรฐาน",
+        action: "ปรับเวลาเข้านอนและสร้างกิจวัตรก่อนนอน"
+      });
+    }
+    
+    if (healthScores.nutritionScore < 60) {
+      alerts.push({
+        type: "Nutrition",
+        severity: "low",
+        message: "โปรตีนไม่เพียงพอ",
+        action: "เพิ่มการบริโภคโปรตีนจากเนื้อสัตว์และพืช"
+      });
+    }
+    
+    if (healthScores.exerciseScore < 60) {
+      alerts.push({
+        type: "Exercise",
+        severity: "medium",
+        message: "การออกกำลังกายไม่เพียงพอ",
+        action: "เพิ่มความถี่และความเข้มข้นในการออกกำลังกาย"
+      });
+    }
+    
+    return alerts;
   }
 
   /**

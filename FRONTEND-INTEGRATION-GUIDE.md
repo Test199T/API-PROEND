@@ -422,6 +422,30 @@ useEffect(() => {
 useEffect(() => {
   loadHealthData();
 }, [userId]); // เรียกเฉพาะเมื่อ userId เปลี่ยน
+
+// ✅ ถูก - เพิ่ม loading state และ debounce
+const [loading, setLoading] = useState(false);
+const [lastAnalysis, setLastAnalysis] = useState(null);
+
+const loadHealthData = async () => {
+  if (loading) return; // ป้องกันการเรียกซ้ำ
+  
+  // ตรวจสอบ cache (5 นาที)
+  const now = Date.now();
+  if (lastAnalysis && (now - lastAnalysis.timestamp) < 300000) {
+    console.log('Using cached analysis');
+    return lastAnalysis.data;
+  }
+  
+  setLoading(true);
+  try {
+    const result = await aiService.analyzeHealth(userId);
+    setLastAnalysis({ data: result, timestamp: now });
+    return result;
+  } finally {
+    setLoading(false);
+  }
+};
 ```
 
 ### **2. ข้อมูลสุขภาพว่างเปล่า:**
@@ -476,5 +500,62 @@ fetch('/health')
 fetch('/api/me')
 fetch('/api/health')
 fetch('/api/ai-service/health')
+```
+
+### **5. เพิ่ม Debounce เพื่อลดการเรียก API:**
+```typescript
+// สร้าง debounce function
+const useDebounce = (value, delay) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
+// ใช้ใน component
+const [searchTerm, setSearchTerm] = useState('');
+const debouncedSearchTerm = useDebounce(searchTerm, 500); // รอ 500ms
+
+useEffect(() => {
+  if (debouncedSearchTerm) {
+    loadHealthData();
+  }
+}, [debouncedSearchTerm]);
+```
+
+### **6. ใช้ Loading States:**
+```typescript
+const [loading, setLoading] = useState(false);
+const [error, setError] = useState(null);
+
+const loadHealthData = async () => {
+  if (loading) return; // ป้องกันการเรียกซ้ำ
+  
+  setLoading(true);
+  setError(null);
+  
+  try {
+    const result = await aiService.analyzeHealth(userId);
+    setHealthData(result.data);
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
+// แสดง loading state
+if (loading) {
+  return <div>กำลังวิเคราะห์ข้อมูล...</div>;
+}
 ```
 - API endpoints ต้อง accessible จาก frontend
