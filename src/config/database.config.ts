@@ -1,10 +1,12 @@
 import { ConfigService } from '@nestjs/config';
 
 export const getDatabaseConfig = (configService: ConfigService): any => {
+  const nodeEnv = configService.get('NODE_ENV') || 'development';
+  
   return {
     type: 'postgres',
     host: configService.get('SUPABASE_DB_HOST') || 'db.supabase.co',
-    port: configService.get('SUPABASE_DB_PORT') || 5432,
+    port: parseInt(configService.get('SUPABASE_DB_PORT') || '5432'),
     username: configService.get('SUPABASE_DB_USER') || 'postgres',
     password: configService.get('SUPABASE_DB_PASSWORD'),
     database: configService.get('SUPABASE_DB_NAME') || 'postgres',
@@ -12,10 +14,9 @@ export const getDatabaseConfig = (configService: ConfigService): any => {
       rejectUnauthorized: false,
     },
     entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-    synchronize: configService.get('NODE_ENV') === 'development', // ระวัง! อย่าใช้ใน production
-    logging: configService.get('NODE_ENV') === 'development',
+    synchronize: nodeEnv === 'development',
+    logging: nodeEnv === 'development',
     autoLoadEntities: true,
-    // Connection Pool Settings
     extra: {
       connectionLimit: 10,
       acquireTimeout: 60000,

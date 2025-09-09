@@ -1,10 +1,13 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+// import { TypeOrmModule } from '@nestjs/typeorm';
+// import { getDatabaseConfig } from './config/database.config';
 
 import { AuthModule } from './auth/auth.module';
 import { ProfileModule } from './profile/profile.module';
 import { ExerciseLogModule } from './exercise-log/exercise-log.module';
 import { SleepLogModule } from './sleep-log/sleep-log.module';
+import { AIServiceModule } from './ai-service/ai-service.module';
 import { SupabaseService } from './services/supabase.service';
 import { AIService } from './services/ai.service';
 import { DashboardService } from './services/dashboard.service';
@@ -36,11 +39,17 @@ import { HealthController } from './controllers/health.controller';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    // TypeOrmModule.forRootAsync({
+    //   imports: [ConfigModule],
+    //   useFactory: (configService: ConfigService) => getDatabaseConfig(configService),
+    //   inject: [ConfigService],
+    // }),
 
     AuthModule,
     ProfileModule,
     ExerciseLogModule,
     SleepLogModule,
+    AIServiceModule,
   ],
   controllers: [
     DashboardController,

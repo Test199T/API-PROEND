@@ -1,0 +1,124 @@
+{
+  "info": {
+    "name": "AI Service API",
+    "description": "AI Service endpoints for health analysis and recommendations",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/ai-service/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "ai-service", "health"]
+        }
+      }
+    },
+    {
+      "name": "Analyze Health",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": 161,\n  \"analysisType\": \"complete\",\n  \"timeframe\": \"month\",\n  \"includeRecommendations\": true,\n  \"includeInsights\": true\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/ai-service/analyze",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "ai-service", "analyze"]
+        }
+      }
+    },
+    {
+      "name": "Get Food Recommendations",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/ai-service/food-recommendations/161",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "ai-service", "food-recommendations", "161"]
+        }
+      }
+    },
+    {
+      "name": "Get Exercise Recommendations",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/ai-service/exercise-recommendations/161",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "ai-service", "exercise-recommendations", "161"]
+        }
+      }
+    },
+    {
+      "name": "Analyze Nutrition",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/ai-service/nutrition/161",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "ai-service", "nutrition", "161"]
+        }
+      }
+    },
+    {
+      "name": "Analyze Exercise",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/ai-service/exercise/161",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "ai-service", "exercise", "161"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "token",
+      "value": "YOUR_JWT_TOKEN_HERE"
+    }
+  ]
+}

@@ -37,8 +37,17 @@ export class AIService {
    */
   async analyzeUserHealth(userId: number): Promise<any> {
     try {
+      // ตรวจสอบ userId
+      if (!userId || userId <= 0) {
+        throw new Error('User ID not found. Please login again.');
+      }
+
       // ดึงข้อมูลผู้ใช้และสุขภาพ
       const userData = await this.supabaseService.getUserById(userId);
+      if (!userData) {
+        throw new Error('User ID not found. Please login again.');
+      }
+      
       const healthData = await this.getHealthDataForAnalysis(userId);
 
       // ใช้ OpenRouter AI วิเคราะห์ข้อมูล
