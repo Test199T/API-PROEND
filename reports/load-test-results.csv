@@ -1,0 +1,12 @@
+metric_name,timestamp,metric_value,check,error,error_code,expected_response,group,method,name,proto,scenario,service,status,subproto,tls_version,url,extra_tags,metadata
+http_reqs,1757918427,1.000000,,lookup: no such host,1101,false,::setup,GET,https://api.vitawise.ai/api/users,,,,0,,,https://api.vitawise.ai/api/users,,
+http_req_duration,1757918427,0.000000,,lookup: no such host,1101,false,::setup,GET,https://api.vitawise.ai/api/users,,,,0,,,https://api.vitawise.ai/api/users,,
+http_req_blocked,1757918427,0.000000,,lookup: no such host,1101,false,::setup,GET,https://api.vitawise.ai/api/users,,,,0,,,https://api.vitawise.ai/api/users,,
+http_req_connecting,1757918427,0.000000,,lookup: no such host,1101,false,::setup,GET,https://api.vitawise.ai/api/users,,,,0,,,https://api.vitawise.ai/api/users,,
+http_req_tls_handshaking,1757918427,0.000000,,lookup: no such host,1101,false,::setup,GET,https://api.vitawise.ai/api/users,,,,0,,,https://api.vitawise.ai/api/users,,
+http_req_sending,1757918427,0.000000,,lookup: no such host,1101,false,::setup,GET,https://api.vitawise.ai/api/users,,,,0,,,https://api.vitawise.ai/api/users,,
+http_req_waiting,1757918427,0.000000,,lookup: no such host,1101,false,::setup,GET,https://api.vitawise.ai/api/users,,,,0,,,https://api.vitawise.ai/api/users,,
+http_req_receiving,1757918427,0.000000,,lookup: no such host,1101,false,::setup,GET,https://api.vitawise.ai/api/users,,,,0,,,https://api.vitawise.ai/api/users,,
+http_req_failed,1757918427,1.000000,,lookup: no such host,1101,false,::setup,GET,https://api.vitawise.ai/api/users,,,,0,,,https://api.vitawise.ai/api/users,,
+data_sent,1757918427,0.000000,,,,,::setup,,,,,,,,,,,
+data_received,1757918427,0.000000,,,,,::setup,,,,,,,,,,,
