@@ -269,7 +269,31 @@ export class OpenRouterService {
     userData: any,
     userMessage: string,
     chatHistory: any[],
+    recentActivities?: any,
   ): OpenRouterMessage[] {
+    // สร้างข้อมูลกิจกรรมล่าสุด
+    let activitiesInfo = '';
+    if (recentActivities && recentActivities.summary) {
+      const { summary, food_logs, exercise_logs, sleep_logs, water_logs } = recentActivities;
+      
+      activitiesInfo = `
+
+ข้อมูลกิจกรรมล่าสุด (${summary.period}):
+- บันทึกอาหาร: ${summary.total_food_entries} รายการ
+- บันทึกการออกกำลังกาย: ${summary.total_exercise_entries} รายการ  
+- บันทึกการนอน: ${summary.total_sleep_entries} รายการ
+- บันทึกการดื่มน้ำ: ${summary.total_water_entries} รายการ
+
+รายละเอียดกิจกรรมล่าสุด:
+${food_logs.length > 0 ? `อาหารล่าสุด: ${food_logs.map(log => `${log.food_name} (${log.calories} แคลอรี่)`).join(', ')}` : 'ไม่มีข้อมูลอาหารล่าสุด'}
+
+${exercise_logs.length > 0 ? `การออกกำลังกายล่าสุด: ${exercise_logs.map(log => `${log.exercise_type} ${log.duration_minutes} นาที`).join(', ')}` : 'ไม่มีข้อมูลการออกกำลังกายล่าสุด'}
+
+${sleep_logs.length > 0 ? `การนอนล่าสุด: ${sleep_logs.slice(0, 3).map(log => `${log.total_sleep_hours} ชั่วโมง (คุณภาพ: ${log.sleep_quality}/10)`).join(', ')}` : 'ไม่มีข้อมูลการนอนล่าสุด'}
+
+${water_logs.length > 0 ? `การดื่มน้ำล่าสุด: ${water_logs.slice(0, 3).map(log => `${log.amount_ml} มล.`).join(', ')}` : 'ไม่มีข้อมูลการดื่มน้ำล่าสุด'}`;
+    }
+
     const systemPrompt = `คุณเป็นผู้ช่วยสุขภาพส่วนตัวที่ชื่อ "VITA WISE AI" 
 
 ข้อมูลผู้ใช้:
@@ -278,7 +302,68 @@ export class OpenRouterService {
 - เพศ: ${userData.gender || 'ไม่ระบุ'}
 - ส่วนสูง: ${userData.height_cm || 'ไม่ระบุ'} ซม.
 - น้ำหนัก: ${userData.weight_kg || 'ไม่ระบุ'} กก.
-- ระดับกิจกรรม: ${userData.activity_level || 'ไม่ระบุ'}
+- ระดับกิจกรรม: ${userData.activity_level || 'ไม่ระบุ'}${activitiesInfo}
+
+ความสามารถพิเศษของคุณ:
+1. วิเคราะห์ข้อมูลสุขภาพเฉพาะเจาะจง (โภชนาการ, การออกกำลังกาย, การนอน, การดื่มน้ำ, เป้าหมาย)
+[Nest] 5112  - 16/09/2568 10:07:37   ERROR [ChatService] Failed to analyze specific health data for user 161
+[Nest] 5112  - 16/09/2568 10:07:37   ERROR [ChatService] TypeError: Cannot read properties of undefined (reading 'toLowerCase')
+    at ChatService.analyzeSpecificHealthData (C:\Users\zombiman\API-PROEND\src\services\chat.service.ts:359:28)
+    at ChatController.analyzeSpecificHealthData (C:\Users\zombiman\API-PROEND\src\controllers\chat.controller.ts:204:51)   
+    at C:\Users\zombiman\API-PROEND\node_modules\@nestjs\core\router\router-execution-context.js:38:29
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-09-16 10:07:37 info  HTTP Request {
+  "service": "health-api",
+  "environment": "development",
+  "version": "0.0.1",
+  "type": "http_request",
+  "method": "POST",
+  "url": "/api/chat/ai/analyze-specific",
+  "statusCode": 201,
+  "duration": 8,
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+}
+[Nest] 5112  - 16/09/2568 10:07:37   DEBUG [AuthGuard] Token verified for user: zoomgamer807@gmail.com
+2025-09-16 10:07:37 info [LoggingInterceptor] Incoming Request: GET /api/chat/sessions/122/messages {
+  "service": "health-api",
+  "environment": "development",
+  "version": "0.0.1",
+  "ip": "::1",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+  "headers": {
+    "host": "localhost:3000",
+    "connection": "keep-alive",
+    "sec-ch-ua-platform": "\"Windows\"",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+    "sec-ch-ua": "\"Chromium\";v=\"140\", \"Not=A?Brand\";v=\"24\", \"Google Chrome\";v=\"140\"",
+    "sec-ch-ua-mobile": "?0",
+    "accept": "*/*",
+    "origin": "http://localhost:8081",
+    "sec-fetch-site": "same-site",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-dest": "empty",
+    "referer": "http://localhost:8081/",
+    "accept-encoding": "gzip, deflate, br, zstd",
+    "accept-language": "th-TH,th;q=0.9,en-US;q=0.8,en;q=0.7"
+  }
+}
+2025-09-16 10:07:37 info  HTTP Request {
+  "service": "health-api",
+  "environment": "development",
+  "version": "0.0.1",
+  "type": "http_request",
+  "method": "GET",
+  "url": "/api/chat/sessions/122/messages",
+  "statusCode": 200,
+  "duration": 519,
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+}
+
+
+2. วิเคราะห์ข้อมูลและให้คำแนะนำที่เฉพาะเจาะจงตามข้อมูลจริงของผู้ใช้
+3. ระบุปัญหาจากข้อมูลที่มีและเสนอวิธีแก้ไขที่ปฏิบัติได้จริง
+4. คำนวณคะแนนสุขภาพและให้คำแนะนำปรับปรุง
+5. วิเคราะห์แนวโน้มและรูปแบบพฤติกรรมสุขภาพ
 
 คุณควร:
 1. ตอบคำถามเกี่ยวกับสุขภาพอย่างเป็นมิตรและเป็นประโยชน์
@@ -286,6 +371,11 @@ export class OpenRouterService {
 3. ใช้ภาษาไทยที่สุภาพและเข้าใจง่าย
 4. หากไม่แน่ใจ ให้แนะนำให้ปรึกษาแพทย์
 5. ไม่ให้คำแนะนำทางการแพทย์ที่เฉพาะเจาะจงเกินไป
+6. ใช้ข้อมูลกิจกรรมล่าสุดของผู้ใช้ในการตอบคำถามและให้คำแนะนำ
+7. วิเคราะห์ข้อมูลอย่างละเอียดและให้คำแนะนำเฉพาะเจาะจงตามหมวดหมู่
+8. ระบุปัญหาจากข้อมูลและเสนอวิธีแก้ไขที่ปฏิบัติได้จริง
+9. วิเคราะห์แนวโน้มและให้คำแนะนำปรับปรุงที่เฉพาะเจาะจง
+10. ให้คำแนะนำที่เหมาะสมกับไลฟ์สไตล์และเป้าหมายของผู้ใช้
 
 ประวัติการแชทล่าสุด: ${chatHistory
       .slice(-3)
@@ -324,8 +414,9 @@ export class OpenRouterService {
     userData: any,
     userMessage: string,
     chatHistory: any[],
+    recentActivities?: any,
   ): Promise<string> {
-    const messages = this.createChatPrompt(userData, userMessage, chatHistory);
+    const messages = this.createChatPrompt(userData, userMessage, chatHistory, recentActivities);
     return await this.chatCompletion(messages, undefined, 0.8, 800);
   }
 

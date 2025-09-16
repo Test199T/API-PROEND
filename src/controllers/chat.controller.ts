@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Delete,
   Body,
   Param,
   Query,
@@ -191,6 +192,68 @@ export class ChatController {
     }
   }
 
+  @Post('ai/analyze-specific')
+  async analyzeSpecificHealthData(
+    @Request() req,
+    @Body() body: { analysisType?: string; message?: string },
+  ) {
+    const userId = req.user.id;
+
+    // ตรวจสอบ analysisType
+    if (!body.analysisType) {
+      return {
+        success: false,
+        error: 'Analysis type is required',
+        message: 'กรุณาระบุประเภทการวิเคราะห์ (nutrition, exercise, sleep, water, goals, overall)',
+      };
+    }
+
+    try {
+      // วิเคราะห์ข้อมูลเฉพาะเจาะจง
+      const analysisData = await this.chatService.analyzeSpecificHealthData(
+        userId,
+        body.analysisType,
+      );
+
+      // ถ้ามีข้อความเพิ่มเติม ให้ส่งไปยัง AI
+      let aiResponse = null;
+      if (body.message) {
+        const session = await this.chatService.createChatSession(
+          userId,
+          `Analysis: ${body.analysisType}`,
+        );
+        
+        // สร้างข้อความที่มีข้อมูลการวิเคราะห์
+        const enrichedMessage = `${body.message}\n\nข้อมูลการวิเคราะห์:\n${JSON.stringify(analysisData, null, 2)}`;
+        
+        const response = await this.chatService.sendMessage(
+          session.id,
+          userId,
+          enrichedMessage,
+        );
+        
+        aiResponse = response;
+        
+        // ปิดเซสชัน
+        await this.chatService.closeChatSession(session.id);
+      }
+
+      return {
+        success: true,
+        data: {
+          analysis: analysisData,
+          aiResponse: aiResponse,
+        },
+        message: 'Specific health data analyzed successfully',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
   @Post('ai/health-advice')
   async getHealthAdvice(
     @Request() req,
@@ -273,6 +336,33 @@ export class ChatController {
       return {
         success: true,
         message: 'Chat session closed successfully',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  @Delete('sessions/:sessionId')
+  async deleteChatSession(
+    @Request() req,
+    @Param('sessionId') sessionId: string,
+  ) {
+    // ตรวจสอบ sessionId
+    if (!sessionId || isNaN(parseInt(sessionId))) {
+      return {
+        success: false,
+        error: 'Invalid session ID',
+      };
+    }
+
+    try {
+      await this.chatService.deleteChatSession(parseInt(sessionId));
+      return {
+        success: true,
+        message: 'Chat session deleted successfully',
       };
     } catch (error) {
       return {
