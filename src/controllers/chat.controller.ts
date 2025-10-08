@@ -167,13 +167,32 @@ export class ChatController {
     if (!body.message || typeof body.message !== 'string') {
       return { success: false, error: 'Message is required' };
     }
+
+    // ดึงข้อมูลการควบคุมการวิเคราะห์จาก body
+    const analyzeImage = body.analyze_image === 'true';
+    const analysisType = body.analysis_type || 'general';
+    const instruction = body.instruction || '';
+
     // Validate image (if present)
     let imageUrl: string | null = null;
     if (image) {
       imageUrl = image.path;
     }
+
     // timestamp (optional)
     const timestamp = body.timestamp || new Date().toISOString();
+
+    console.log('📥 Received multipart message:', {
+      sessionId,
+      userId,
+      message: body.message,
+      hasImage: !!image,
+      analyzeImage,
+      analysisType,
+      instruction,
+      timestamp
+    });
+
     // เรียก service เพื่อบันทึกข้อความและรูป (ถ้ามี)
     const response = await this.chatService.sendMessageWithImage(
       parseInt(sessionId),
@@ -181,7 +200,11 @@ export class ChatController {
       body.message,
       imageUrl,
       timestamp,
+      analyzeImage,
+      analysisType,
+      instruction,
     );
+
     return {
       success: true,
       data: response,
