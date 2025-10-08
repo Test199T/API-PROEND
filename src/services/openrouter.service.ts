@@ -207,32 +207,129 @@ export class OpenRouterService {
   }
 
   /**
-   * สร้างข้อความด้วย AI (สำหรับหัวข้อหรือข้อความสั้นๆ)
+   * สร้างข้อความด้วย AI (รองรับรูปภาพ)
    */
-  async generateText(
+  async generateTextWithImage(
     prompt: string,
+    imagePath?: string,
     temperature: number = 0.7,
     maxTokens: number = 100,
   ): Promise<string> {
     try {
-      const messages: OpenRouterMessage[] = [
+      let messages: OpenRouterMessage[] = [
         {
           role: 'system',
           content:
-            'คุณเป็นผู้ช่วยที่เก่งในการสรุปและสร้างข้อความที่กระชับ ชัดเจน และสื่อความหมาย',
+            'คุณเป็นผู้ช่วยที่เก่งในการสนทนาแบบเป็นกันเอง เหมือนคุยกับเพื่อน',
         },
         { role: 'user', content: prompt },
       ];
 
+      // ถ้ามีรูปภาพ ให้เพิ่มรูปภาพเข้าไปใน message
+      if (imagePath) {
+        const fs = require('fs');
+        if (fs.existsSync(imagePath)) {
+          try {
+            const imageBuffer = fs.readFileSync(imagePath);
+
+            // ตรวจสอบขนาดรูปภาพ (ไม่เกิน 2MB สำหรับ base64 ที่ปลอดภัย)
+            const imageSizeMB = imageBuffer.length / (1024 * 1024);
+            if (imageSizeMB > 2) {
+              this.logger.warn(`Image size ${imageSizeMB.toFixed(2)}MB is large, consider resizing`);
+              // ถ้ารูปใหญ่เกินไป ให้ตอบโดยไม่ใช้รูปภาพแทน
+              this.logger.warn('Image too large, falling back to text-only response');
+              return await this.chatCompletion(messages, 'gpt-4o-mini', temperature, maxTokens);
+            }
+
+            const base64Image = imageBuffer.toString('base64');
+
+            // ตรวจสอบและปรับปรุง base64
+            if (!this.isValidBase64Image(base64Image)) {
+              this.logger.error('Invalid base64 image data');
+              return await this.chatCompletion(messages, 'gpt-4o-mini', temperature, maxTokens);
+            }
+
+            // สร้าง data URL สำหรับภาพ
+            const imageDataUrl = `data:image/jpeg;base64,${base64Image}`;
+
+            messages[1].content = [
+              {
+                type: 'text',
+                text: prompt
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: imageDataUrl
+                }
+              }
+            ];
+          } catch (imageError) {
+            this.logger.error('Error processing image:', imageError);
+            // ถ้ารูปภาพมีปัญหา ให้ตอบโดยไม่ใช้รูปภาพ
+            this.logger.warn('Falling back to text-only response due to image processing error');
+            return await this.chatCompletion(messages, 'gpt-4o-mini', temperature, maxTokens);
+          }
+        } else {
+          this.logger.warn(`Image file not found: ${imagePath}`);
+          return await this.chatCompletion(messages, 'gpt-4o-mini', temperature, maxTokens);
+        }
+      }
+
+      // ใช้ model ที่รองรับ vision และเสถียร
+      const visionModel = 'gpt-4o-mini';
+
       return await this.chatCompletion(
         messages,
-        undefined,
+        visionModel,
         temperature,
         maxTokens,
       );
     } catch (error) {
-      this.logger.error('Failed to generate text', error);
+      this.logger.error('Failed to generate text with image', error);
+
+      // ถ้าเป็น error ที่เกี่ยวกับรูปภาพ ให้ลองตอบโดยไม่ใช้รูปภาพ
+      if (error.message && (error.message.includes('image') || error.message.includes('Invalid image'))) {
+        this.logger.warn('Image processing failed, falling back to text-only');
+        const fallbackMessages: OpenRouterMessage[] = [
+          {
+            role: 'system',
+            content: 'คุณเป็นผู้ช่วยที่เก่งในการสนทนาแบบเป็นกันเอง เหมือนคุยกับเพื่อน',
+          },
+          { role: 'user', content: `${prompt}\n\n[หมายเหตุ: มีรูปภาพแต่ไม่สามารถแสดงได้]` },
+        ];
+        return await this.chatCompletion(fallbackMessages, 'gpt-4o-mini', temperature, maxTokens);
+      }
+
       throw error;
+    }
+  }
+
+  /**
+   * ตรวจสอบว่า base64 image ถูกต้องหรือไม่
+   */
+  private isValidBase64Image(base64String: string): boolean {
+    try {
+      // ตรวจสอบ format พื้นฐานของ base64
+      if (!base64String || typeof base64String !== 'string') {
+        return false;
+      }
+
+      // ตรวจสอบว่าเป็น base64 ที่ถูกต้อง
+      const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
+      if (!base64Regex.test(base64String)) {
+        return false;
+      }
+
+      // ตรวจสอบความยาวขั้นต่ำ (base64 ของรูปภาพเล็กที่สุดควรมีอย่างน้อย 100 ตัวอักษร)
+      if (base64String.length < 100) {
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      this.logger.error('Error validating base64 image:', error);
+      return false;
     }
   }
 

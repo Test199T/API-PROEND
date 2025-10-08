@@ -4,19 +4,19 @@ import {
   Post,
   Put,
   Delete,
-  Body,
   Param,
-  Query,
-  UseGuards,
+  Body,
   Request,
-  UploadedFile,
+  UseGuards,
   UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
-import { ChatService } from '../services/chat.service';
-import { AuthGuard } from '../auth/guards/auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import * as path from 'path';
+import * as fs from 'fs';
+import { AuthGuard } from '../auth/guards/auth.guard';
+import { ChatService } from '../services/chat.service';
 
 @Controller('chat')
 @UseGuards(AuthGuard)
@@ -173,10 +173,48 @@ export class ChatController {
     const analysisType = body.analysis_type || 'general';
     const instruction = body.instruction || '';
 
-    // Validate image (if present)
+    // Validate image (if present) - support multiple field names
     let imageUrl: string | null = null;
-    if (image) {
-      imageUrl = image.path;
+
+    // Check for image in different field names
+    const possibleImageFields = ['image', 'file', 'photo', 'picture'];
+    let uploadedImage = image;
+
+    // If no image in 'image' field, check other possible fields
+    if (!uploadedImage) {
+      for (const fieldName of possibleImageFields) {
+        if (req.files && req.files[fieldName] && req.files[fieldName][0]) {
+          uploadedImage = req.files[fieldName][0];
+          console.log(`🖼️ Found image in field '${fieldName}':`, uploadedImage.originalname);
+          break;
+        }
+      }
+    }
+
+    if (uploadedImage) {
+      imageUrl = uploadedImage.path;
+      console.log('🖼️ Image uploaded successfully:', {
+        originalName: uploadedImage.originalname,
+        filename: uploadedImage.filename,
+        path: uploadedImage.path,
+        size: uploadedImage.size,
+        mimetype: uploadedImage.mimetype
+      });
+    } else {
+      console.log('❌ No image uploaded in any expected field');
+      console.log('🔍 Debug info:', {
+        image: image,
+        body: Object.keys(body),
+        files: req.files ? Object.keys(req.files) : 'no files',
+        file: req.file,
+        allFields: req.body ? Object.keys(req.body) : 'no body'
+      });
+    }
+
+    // Additional validation
+    if (imageUrl && !fs.existsSync(imageUrl)) {
+      console.error('❌ Image file does not exist at path:', imageUrl);
+      imageUrl = null;
     }
 
     // timestamp (optional)
