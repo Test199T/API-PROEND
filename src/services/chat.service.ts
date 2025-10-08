@@ -323,32 +323,19 @@ export class ChatService {
       message_type: imageUrl ? 'image' : 'text',
       image_url: imageUrl || null,
     };
-    const savedUserMessage = await this.supabaseService.createChatMessage(userMessageObj);
+    const savedUserMessage =
+      await this.supabaseService.createChatMessage(userMessageObj);
 
     // 2. สร้างข้อความตอบกลับจาก AI (วิเคราะห์รูปจริงถ้ามี)
     let aiMessageText = 'ขอบคุณสำหรับข้อความ';
     let aiImageUrl = null;
     if (imageUrl) {
-      // วิเคราะห์รูปจริงด้วย FoodImageService ที่ปรับปรุงแล้ว
-      const analysis = await this.foodImageService.analyzeFoodImage(imageUrl, 'uploaded-image');
-
-      // สร้างข้อความที่อธิบายรูปภาพอย่างละเอียดและเข้าใจง่าย
-      const nutritionInfo = analysis.nutrition;
-      const foodName = analysis.food_name;
-
-      aiMessageText = `จากรูปที่คุณส่งมา ฉันวิเคราะห์แล้วพบว่าเป็น "${foodName}"
-
-🍽️ ข้อมูลโภชนาการโดยประมาณ:
-• พลังงาน: ${nutritionInfo.calories} แคลอรี่
-• โปรตีน: ${nutritionInfo.protein} กรัม
-• คาร์โบไฮเดรต: ${nutritionInfo.carbs} กรัม
-• ไขมัน: ${nutritionInfo.fat} กรัม
-
-💡 คำแนะนำการบริโภค:
-${analysis.recommendations || 'อาหารนี้เหมาะสำหรับมื้อหลักของคุณ ถ้าคุณกำลังควบคุมน้ำหนักควรคำนวณปริมาณที่เหมาะสมกับความต้องการพลังงานในแต่ละวัน'}
-
-ถ้าคุณต้องการคำแนะนำเพิ่มเติมหรือมีรูปภาพอื่นๆ สามารถส่งมาได้เลยนะครับ!`;
-
+      // วิเคราะห์รูปจริงด้วย FoodImageService
+      const analysis = await this.foodImageService.analyzeFoodImage(
+        imageUrl,
+        'uploaded-image',
+      );
+      aiMessageText = `จากรูปที่คุณส่งมา ดูเหมือนจะเป็น${analysis.food_name} ให้พลังงานประมาณ ${analysis.nutrition.calories} kcal มีโปรตีน ${analysis.nutrition.protein}g คาร์บ ${analysis.nutrition.carbs}g ไขมัน ${analysis.nutrition.fat}g เหมาะสำหรับมื้อกลางวัน ถ้าคุณต้องการลดน้ำหนักควรลดปริมาณข้าวลงเล็กน้อย`;
       // สามารถแนบ aiImageUrl = imageUrl; หรือ URL อื่นถ้า AI สร้างรูปใหม่
     } else {
       aiMessageText = await this.openRouterService.respondToChat(
@@ -367,7 +354,8 @@ ${analysis.recommendations || 'อาหารนี้เหมาะสำห�
       message_type: aiImageUrl ? 'image' : 'text',
       image_url: aiImageUrl,
     };
-    const savedAiMessage = await this.supabaseService.createChatMessage(aiMessageObj);
+    const savedAiMessage =
+      await this.supabaseService.createChatMessage(aiMessageObj);
 
     return {
       userMessage: {
@@ -477,7 +465,7 @@ ${analysis.recommendations || 'อาหารนี้เหมาะสำห�
         .toISOString()
         .split('T')[0];
 
-      switch (analysisType?.toLowerCase() || 'overall') {
+      switch (analysisType.toLowerCase()) {
         case 'nutrition':
         case 'อาหาร':
           return await this.analyzeNutritionData(userId, weekAgo, today);
@@ -877,4 +865,3 @@ ${analysis.recommendations || 'อาหารนี้เหมาะสำห�
     }
   }
 }
-

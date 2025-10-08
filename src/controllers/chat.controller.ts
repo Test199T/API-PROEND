@@ -42,7 +42,7 @@ export class ChatController {
     } catch (error) {
       return {
         success: false,
-        error: error?.message || 'Unknown error occurred',
+        error: error.message,
       };
     }
   }
@@ -60,7 +60,7 @@ export class ChatController {
     } catch (error) {
       return {
         success: false,
-        error: error?.message || 'Unknown error occurred',
+        error: error.message,
       };
     }
   }
@@ -91,7 +91,7 @@ export class ChatController {
     } catch (error) {
       return {
         success: false,
-        error: error?.message || 'Unknown error occurred',
+        error: error.message,
       };
     }
   }
@@ -129,7 +129,7 @@ export class ChatController {
     } catch (error) {
       return {
         success: false,
-        error: error?.message || 'Unknown error occurred',
+        error: error.message,
       };
     }
   }
@@ -140,7 +140,8 @@ export class ChatController {
       storage: diskStorage({
         destination: './uploads/images',
         filename: (req, file, cb) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
           cb(null, uniqueSuffix + path.extname(file.originalname));
         },
       }),
@@ -151,13 +152,13 @@ export class ChatController {
         else cb(new Error('Only image files are allowed!'), false);
       },
       limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-    })
+    }),
   )
   async sendMessageMultipart(
     @Request() req,
     @Param('sessionId') sessionId: string,
     @Body() body: any,
-    @UploadedFile() image: any
+    @UploadedFile() image: any,
   ) {
     const userId = req.user.id;
     if (!sessionId || isNaN(parseInt(sessionId))) {
@@ -179,9 +180,13 @@ export class ChatController {
       userId,
       body.message,
       imageUrl,
-      timestamp
+      timestamp,
     );
-    return { success: true, data: response, message: 'Message sent successfully' };
+    return {
+      success: true,
+      data: response,
+      message: 'Message sent successfully',
+    };
   }
 
   @Get('sessions/:sessionId/messages')
@@ -205,7 +210,7 @@ export class ChatController {
     } catch (error) {
       return {
         success: false,
-        error: error?.message || 'Unknown error occurred',
+        error: error.message,
       };
     }
   }
@@ -242,7 +247,7 @@ export class ChatController {
     } catch (error) {
       return {
         success: false,
-        error: error?.message || 'Unknown error occurred',
+        error: error.message,
       };
     }
   }
@@ -259,7 +264,8 @@ export class ChatController {
       return {
         success: false,
         error: 'Analysis type is required',
-        message: 'กรุณาระบุประเภทการวิเคราะห์ (nutrition, exercise, sleep, water, goals, overall)',
+        message:
+          'กรุณาระบุประเภทการวิเคราะห์ (nutrition, exercise, sleep, water, goals, overall)',
       };
     }
 
@@ -277,18 +283,18 @@ export class ChatController {
           userId,
           `Analysis: ${body.analysisType}`,
         );
-        
+
         // สร้างข้อความที่มีข้อมูลการวิเคราะห์
         const enrichedMessage = `${body.message}\n\nข้อมูลการวิเคราะห์:\n${JSON.stringify(analysisData, null, 2)}`;
-        
+
         const response = await this.chatService.sendMessage(
           session.id,
           userId,
           enrichedMessage,
         );
-        
+
         aiResponse = response;
-        
+
         // ปิดเซสชัน
         await this.chatService.closeChatSession(session.id);
       }
@@ -304,7 +310,7 @@ export class ChatController {
     } catch (error) {
       return {
         success: false,
-        error: error?.message || 'Unknown error occurred',
+        error: error.message,
       };
     }
   }
@@ -340,7 +346,7 @@ export class ChatController {
     } catch (error) {
       return {
         success: false,
-        error: error?.message || 'Unknown error occurred',
+        error: error.message,
       };
     }
   }
@@ -366,7 +372,7 @@ export class ChatController {
     } catch (error) {
       return {
         success: false,
-        error: error?.message || 'Unknown error occurred',
+        error: error.message,
       };
     }
   }
@@ -395,7 +401,7 @@ export class ChatController {
     } catch (error) {
       return {
         success: false,
-        error: error?.message || 'Unknown error occurred',
+        error: error.message,
       };
     }
   }
@@ -422,7 +428,7 @@ export class ChatController {
     } catch (error) {
       return {
         success: false,
-        error: error?.message || 'Unknown error occurred',
+        error: error.message,
       };
     }
   }
@@ -470,7 +476,7 @@ export class ChatController {
     } catch (error) {
       return {
         success: false,
-        error: error?.message || 'Unknown error occurred',
+        error: error.message,
       };
     }
   }
@@ -516,7 +522,7 @@ export class ChatController {
     } catch (error) {
       return {
         success: false,
-        error: error?.message || 'Unknown error occurred',
+        error: error.message,
       };
     }
   }
@@ -558,7 +564,7 @@ export class ChatController {
     } catch (error) {
       return {
         success: false,
-        error: error?.message || 'Unknown error occurred',
+        error: error.message,
       };
     }
   }
@@ -573,7 +579,8 @@ export class ChatController {
       storage: diskStorage({
         destination: './uploads/images',
         filename: (req, file, cb) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
           cb(null, uniqueSuffix + path.extname(file.originalname));
         },
       }),
@@ -584,12 +591,12 @@ export class ChatController {
         else cb(new Error('Only image files are allowed!'), false);
       },
       limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-    })
+    }),
   )
   async analyzeFoodImage(
     @Request() req,
     @Param('sessionId') sessionId: string,
-  @UploadedFile() image: any
+    @UploadedFile() image: any,
   ) {
     const userId = req.user.id;
     if (!sessionId || isNaN(parseInt(sessionId))) {
@@ -603,7 +610,7 @@ export class ChatController {
       parseInt(sessionId),
       userId,
       image.path,
-      image.originalname
+      image.originalname,
     );
     return { success: true, data: result };
   }
