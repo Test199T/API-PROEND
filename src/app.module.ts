@@ -18,6 +18,7 @@ import { HealthGoalService } from './services/health-goal.service';
 import { FoodLogService } from './services/food-log.service';
 import { OpenRouterService } from './services/openrouter.service';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { FoodImageService } from './services/food-image.service';
 
 // Controllers
 import { DashboardController } from './controllers/dashboard.controller';
@@ -79,6 +80,7 @@ import { HealthController } from './controllers/health.controller';
     FoodLogService,
     OpenRouterService,
     HttpExceptionFilter,
+    FoodImageService,
   ],
 })
 export class AppModule {}

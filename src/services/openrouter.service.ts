@@ -4,7 +4,13 @@ import axios, { AxiosInstance, AxiosError } from 'axios';
 
 export interface OpenRouterMessage {
   role: 'system' | 'user' | 'assistant';
-  content: string;
+  content: string | Array<{
+    type: 'text' | 'image_url';
+    text?: string;
+    image_url?: {
+      url: string;
+    };
+  }>;
 }
 
 export interface OpenRouterRequest {
@@ -453,6 +459,125 @@ ${water_logs.length > 0 ? `การดื่มน้ำล่าสุด: ${w
     ];
 
     return await this.chatCompletion(messages, undefined, 0.6, 1200);
+  }
+
+  async analyzeFoodImageWithAI(imagePath: string): Promise<any> {
+    // อ่านไฟล์ภาพเป็น base64
+    const fs = require('fs');
+    const imageBuffer = fs.readFileSync(imagePath);
+    const base64Image = imageBuffer.toString('base64');
+
+    // สร้าง data URL สำหรับภาพ
+    const imageDataUrl = `data:image/jpeg;base64,${base64Image}`;
+
+    // สร้าง prompt สำหรับการวิเคราะห์อาหาร
+    const prompt = `คุณเป็นนักโภชนาการที่เชี่ยวชาญในการวิเคราะห์รูปภาพอาหาร
+
+กรุณาวิเคราะห์รูปภาพอาหารนี้และให้ข้อมูลดังนี้:
+1. ชื่ออาหารที่เห็นในรูป
+2. ค่าพลังงานโดยประมาณ (แคลอรี่)
+3. ปริมาณโปรตีนโดยประมาณ (กรัม)
+4. ปริมาณคาร์โบไฮเดรตโดยประมาณ (กรัม)
+5. ปริมาณไขมันโดยประมาณ (กรัม)
+6. คำแนะนำการบริโภคที่เหมาะสม
+
+กรุณาตอบในรูปแบบ JSON ที่มีโครงสร้างดังนี้:
+{
+  "food_name": "ชื่ออาหาร",
+  "nutrition": {
+    "calories": ตัวเลข,
+    "protein": ตัวเลข,
+    "carbs": ตัวเลข,
+    "fat": ตัวเลข
+  },
+  "recommendations": "คำแนะนำการบริโภค"
+}
+
+สำคัญ: กรุณาตอบเฉพาะ JSON เท่านั้น ห้ามมีข้อความอื่นใดก่อนหรือหลัง JSON`;
+
+    const messages: OpenRouterMessage[] = [
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'text',
+            text: prompt
+          },
+          {
+            type: 'image_url',
+            image_url: {
+              url: imageDataUrl
+            }
+          }
+        ]
+      }
+    ];
+
+    this.logger.debug(`Sending food image analysis request to OpenRouter for image: ${imagePath}`);
+
+    const response = await this.chatCompletion(
+      messages,
+      'gpt-4o-mini',
+      0.3,
+      500
+    );
+
+    this.logger.debug(`OpenRouter response: ${response}`);
+
+    try {
+      // ลบ markdown code blocks และ whitespace ที่ไม่จำเป็น
+      let cleanedResponse = response.trim();
+
+      // ลบ ```json ที่ต้นถ้ามี
+      if (cleanedResponse.startsWith('```json')) {
+        cleanedResponse = cleanedResponse.substring(7);
+      } else if (cleanedResponse.startsWith('```')) {
+        cleanedResponse = cleanedResponse.substring(3);
+      }
+
+      // ลบ ``` ที่ท้ายถ้ามี
+      if (cleanedResponse.endsWith('```')) {
+        cleanedResponse = cleanedResponse.substring(0, cleanedResponse.length - 3);
+      }
+
+      // ลบ whitespace ที่เหลือ
+      cleanedResponse = cleanedResponse.trim();
+
+      this.logger.debug(`Cleaned response for parsing: ${cleanedResponse}`);
+
+      // พยายาม parse JSON response
+      const parsedResponse = JSON.parse(cleanedResponse);
+      return {
+        food_name: parsedResponse.food_name || 'อาหารไม่ระบุ',
+        nutrition: {
+          calories: parsedResponse.nutrition?.calories || 0,
+          protein: parsedResponse.nutrition?.protein || 0,
+          carbs: parsedResponse.nutrition?.carbs || 0,
+          fat: parsedResponse.nutrition?.fat || 0
+        },
+        recommendations: parsedResponse.recommendations || 'ไม่มีคำแนะนำเฉพาะ',
+        image_url: imagePath,
+        analyzed_at: new Date().toISOString(),
+        note: 'วิเคราะห์ด้วย AI'
+      };
+    } catch (parseError) {
+      // ถ้า parse ไม่ได้ ให้ใช้ fallback response
+      this.logger.warn('Failed to parse AI response, using fallback', parseError);
+      this.logger.warn(`Raw AI response: ${response}`);
+      return {
+        food_name: 'อาหารที่วิเคราะห์ไม่ได้',
+        nutrition: {
+          calories: 0,
+          protein: 0,
+          carbs: 0,
+          fat: 0
+        },
+        recommendations: 'ไม่สามารถวิเคราะห์รูปภาพได้ กรุณาลองใหม่อีกครั้ง',
+        image_url: imagePath,
+        analyzed_at: new Date().toISOString(),
+        note: 'AI ไม่สามารถวิเคราะห์ได้',
+      };
+    }
   }
 
   /**

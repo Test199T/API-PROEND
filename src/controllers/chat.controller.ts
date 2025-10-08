@@ -9,9 +9,14 @@ import {
   Query,
   UseGuards,
   Request,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ChatService } from '../services/chat.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import * as path from 'path';
 
 @Controller('chat')
 @UseGuards(AuthGuard)
@@ -37,7 +42,7 @@ export class ChatController {
     } catch (error) {
       return {
         success: false,
-        error: error.message,
+        error: error?.message || 'Unknown error occurred',
       };
     }
   }
@@ -55,7 +60,7 @@ export class ChatController {
     } catch (error) {
       return {
         success: false,
-        error: error.message,
+        error: error?.message || 'Unknown error occurred',
       };
     }
   }
@@ -86,7 +91,7 @@ export class ChatController {
     } catch (error) {
       return {
         success: false,
-        error: error.message,
+        error: error?.message || 'Unknown error occurred',
       };
     }
   }
@@ -124,9 +129,59 @@ export class ChatController {
     } catch (error) {
       return {
         success: false,
-        error: error.message,
+        error: error?.message || 'Unknown error occurred',
       };
     }
+  }
+
+  @Post('sessions/:sessionId/messages/multipart')
+  @UseInterceptors(
+    FileInterceptor('image', {
+      storage: diskStorage({
+        destination: './uploads/images',
+        filename: (req, file, cb) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(null, uniqueSuffix + path.extname(file.originalname));
+        },
+      }),
+      fileFilter: (req, file, cb) => {
+        const allowed = ['.png', '.jpg', '.jpeg', '.webp'];
+        const ext = path.extname(file.originalname).toLowerCase();
+        if (allowed.includes(ext)) cb(null, true);
+        else cb(new Error('Only image files are allowed!'), false);
+      },
+      limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    })
+  )
+  async sendMessageMultipart(
+    @Request() req,
+    @Param('sessionId') sessionId: string,
+    @Body() body: any,
+    @UploadedFile() image: any
+  ) {
+    const userId = req.user.id;
+    if (!sessionId || isNaN(parseInt(sessionId))) {
+      return { success: false, error: 'Invalid session ID' };
+    }
+    if (!body.message || typeof body.message !== 'string') {
+      return { success: false, error: 'Message is required' };
+    }
+    // Validate image (if present)
+    let imageUrl: string | null = null;
+    if (image) {
+      imageUrl = image.path;
+    }
+    // timestamp (optional)
+    const timestamp = body.timestamp || new Date().toISOString();
+    // เรียก service เพื่อบันทึกข้อความและรูป (ถ้ามี)
+    const response = await this.chatService.sendMessageWithImage(
+      parseInt(sessionId),
+      userId,
+      body.message,
+      imageUrl,
+      timestamp
+    );
+    return { success: true, data: response, message: 'Message sent successfully' };
   }
 
   @Get('sessions/:sessionId/messages')
@@ -150,7 +205,7 @@ export class ChatController {
     } catch (error) {
       return {
         success: false,
-        error: error.message,
+        error: error?.message || 'Unknown error occurred',
       };
     }
   }
@@ -187,7 +242,7 @@ export class ChatController {
     } catch (error) {
       return {
         success: false,
-        error: error.message,
+        error: error?.message || 'Unknown error occurred',
       };
     }
   }
@@ -249,7 +304,7 @@ export class ChatController {
     } catch (error) {
       return {
         success: false,
-        error: error.message,
+        error: error?.message || 'Unknown error occurred',
       };
     }
   }
@@ -285,7 +340,7 @@ export class ChatController {
     } catch (error) {
       return {
         success: false,
-        error: error.message,
+        error: error?.message || 'Unknown error occurred',
       };
     }
   }
@@ -311,7 +366,7 @@ export class ChatController {
     } catch (error) {
       return {
         success: false,
-        error: error.message,
+        error: error?.message || 'Unknown error occurred',
       };
     }
   }
@@ -340,7 +395,7 @@ export class ChatController {
     } catch (error) {
       return {
         success: false,
-        error: error.message,
+        error: error?.message || 'Unknown error occurred',
       };
     }
   }
@@ -367,7 +422,7 @@ export class ChatController {
     } catch (error) {
       return {
         success: false,
-        error: error.message,
+        error: error?.message || 'Unknown error occurred',
       };
     }
   }
@@ -415,7 +470,7 @@ export class ChatController {
     } catch (error) {
       return {
         success: false,
-        error: error.message,
+        error: error?.message || 'Unknown error occurred',
       };
     }
   }
@@ -461,7 +516,7 @@ export class ChatController {
     } catch (error) {
       return {
         success: false,
-        error: error.message,
+        error: error?.message || 'Unknown error occurred',
       };
     }
   }
@@ -503,8 +558,53 @@ export class ChatController {
     } catch (error) {
       return {
         success: false,
-        error: error.message,
+        error: error?.message || 'Unknown error occurred',
       };
     }
+  }
+
+  /**
+   * อัปโหลดและวิเคราะห์รูปอาหารในแชท
+   * POST /chat/sessions/:sessionId/image-analyze
+   */
+  @Post('sessions/:sessionId/image-analyze')
+  @UseInterceptors(
+    FileInterceptor('image', {
+      storage: diskStorage({
+        destination: './uploads/images',
+        filename: (req, file, cb) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(null, uniqueSuffix + path.extname(file.originalname));
+        },
+      }),
+      fileFilter: (req, file, cb) => {
+        const allowed = ['.png', '.jpg', '.jpeg', '.webp'];
+        const ext = path.extname(file.originalname).toLowerCase();
+        if (allowed.includes(ext)) cb(null, true);
+        else cb(new Error('Only image files are allowed!'), false);
+      },
+      limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    })
+  )
+  async analyzeFoodImage(
+    @Request() req,
+    @Param('sessionId') sessionId: string,
+  @UploadedFile() image: any
+  ) {
+    const userId = req.user.id;
+    if (!sessionId || isNaN(parseInt(sessionId))) {
+      return { success: false, error: 'Invalid session ID' };
+    }
+    if (!image) {
+      return { success: false, error: 'No image uploaded' };
+    }
+    // ส่ง path ไป service วิเคราะห์รูปอาหาร
+    const result = await this.chatService.analyzeFoodImage(
+      parseInt(sessionId),
+      userId,
+      image.path,
+      image.originalname
+    );
+    return { success: true, data: result };
   }
 }

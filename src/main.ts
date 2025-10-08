@@ -9,6 +9,8 @@ import { LoggingInterceptor } from './performance/logging.interceptor';
 import * as dotenv from 'dotenv';
 import * as helmet from 'helmet';
 import * as compression from 'compression';
+import * as express from 'express';
+import * as path from 'path';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { ConfigService } from '@nestjs/config';
 
@@ -19,6 +21,9 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('Bootstrap');
   const configService = app.get(ConfigService);
+
+  // Static file serving for uploads
+  app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
   // Security Headers with Helmet
   app.use(helmet.default({
@@ -55,7 +60,7 @@ async function bootstrap() {
   // Enable CORS
   const allowedOrigins = process.env.ALLOWED_ORIGINS 
     ? process.env.ALLOWED_ORIGINS.split(',')
-    : ['http://localhost:8080', 'http://localhost:5173', 'http://localhost:8081'];
+    : ['http://localhost:3000', 'http://localhost:8080', 'http://localhost:5173', 'http://localhost:8081'];
     
   app.enableCors({
     origin: allowedOrigins,

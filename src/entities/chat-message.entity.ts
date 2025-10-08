@@ -49,6 +49,10 @@ export class ChatMessage {
   @Column({ type: 'boolean' })
   is_user_message: boolean;
 
+  // เก็บ url หรือ path ของไฟล์ภาพ (ถ้ามี)
+  @Column({ name: 'image_url', type: 'text', nullable: true })
+  image_url?: string;
+
   @CreateDateColumn()
   timestamp: Date;
 

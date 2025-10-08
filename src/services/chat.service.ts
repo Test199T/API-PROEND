@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { SupabaseService } from './supabase.service';
 import { OpenRouterService } from './openrouter.service';
+import { FoodImageService } from './food-image.service';
 
 @Injectable()
 export class ChatService {
@@ -9,7 +10,34 @@ export class ChatService {
   constructor(
     private readonly supabaseService: SupabaseService,
     private readonly openRouterService: OpenRouterService,
+    private readonly foodImageService: FoodImageService,
   ) {}
+  /**
+   * วิเคราะห์รูปอาหารจากไฟล์ภาพ โดยเรียกใช้ FoodImageService
+   */
+  async analyzeFoodImage(
+    sessionId: number,
+    userId: number,
+    imagePath: string,
+    originalName: string,
+  ): Promise<any> {
+    // เรียกใช้ FoodImageService วิเคราะห์รูปอาหาร
+    const result = await this.foodImageService.analyzeFoodImage(
+      imagePath,
+      originalName,
+    );
+    // สร้างข้อความแชทใหม่ (message_type: IMAGE)
+    await this.supabaseService.createChatMessage({
+      session_id: sessionId,
+      user_id: userId,
+      message_text: `วิเคราะห์รูปอาหาร: ${result.food_name}\nพลังงาน: ${result.nutrition.calories} kcal`,
+      is_user_message: true,
+      timestamp: new Date().toISOString(),
+      message_type: 'image',
+      image_url: imagePath,
+    });
+    return result;
+  }
 
   /**
    * สร้างหัวข้อเซสชันแชทอัตโนมัติด้วย AI
@@ -276,6 +304,84 @@ export class ChatService {
   }
 
   /**
+   * ส่งข้อความและรูป (ถ้ามี) พร้อมบันทึกลงฐานข้อมูล และตอบกลับข้อมูล userMessage/aiMessage
+   */
+  async sendMessageWithImage(
+    sessionId: number,
+    userId: number,
+    message: string,
+    imageUrl: string | null,
+    timestamp: string,
+  ): Promise<any> {
+    // 1. บันทึกข้อความของผู้ใช้
+    const userMessageObj: any = {
+      session_id: sessionId,
+      user_id: userId,
+      message_text: message,
+      is_user_message: true,
+      timestamp,
+      message_type: imageUrl ? 'image' : 'text',
+      image_url: imageUrl || null,
+    };
+    const savedUserMessage = await this.supabaseService.createChatMessage(userMessageObj);
+
+    // 2. สร้างข้อความตอบกลับจาก AI (วิเคราะห์รูปจริงถ้ามี)
+    let aiMessageText = 'ขอบคุณสำหรับข้อความ';
+    let aiImageUrl = null;
+    if (imageUrl) {
+      // วิเคราะห์รูปจริงด้วย FoodImageService ที่ปรับปรุงแล้ว
+      const analysis = await this.foodImageService.analyzeFoodImage(imageUrl, 'uploaded-image');
+
+      // สร้างข้อความที่อธิบายรูปภาพอย่างละเอียดและเข้าใจง่าย
+      const nutritionInfo = analysis.nutrition;
+      const foodName = analysis.food_name;
+
+      aiMessageText = `จากรูปที่คุณส่งมา ฉันวิเคราะห์แล้วพบว่าเป็น "${foodName}"
+
+🍽️ ข้อมูลโภชนาการโดยประมาณ:
+• พลังงาน: ${nutritionInfo.calories} แคลอรี่
+• โปรตีน: ${nutritionInfo.protein} กรัม
+• คาร์โบไฮเดรต: ${nutritionInfo.carbs} กรัม
+• ไขมัน: ${nutritionInfo.fat} กรัม
+
+💡 คำแนะนำการบริโภค:
+${analysis.recommendations || 'อาหารนี้เหมาะสำหรับมื้อหลักของคุณ ถ้าคุณกำลังควบคุมน้ำหนักควรคำนวณปริมาณที่เหมาะสมกับความต้องการพลังงานในแต่ละวัน'}
+
+ถ้าคุณต้องการคำแนะนำเพิ่มเติมหรือมีรูปภาพอื่นๆ สามารถส่งมาได้เลยนะครับ!`;
+
+      // สามารถแนบ aiImageUrl = imageUrl; หรือ URL อื่นถ้า AI สร้างรูปใหม่
+    } else {
+      aiMessageText = await this.openRouterService.respondToChat(
+        await this.supabaseService.getUserById(userId),
+        message,
+        await this.getChatMessages(sessionId),
+        await this.getRecentUserActivities(userId),
+      );
+    }
+    const aiMessageObj: any = {
+      session_id: sessionId,
+      user_id: userId,
+      message_text: aiMessageText,
+      is_user_message: false,
+      timestamp: new Date().toISOString(),
+      message_type: aiImageUrl ? 'image' : 'text',
+      image_url: aiImageUrl,
+    };
+    const savedAiMessage = await this.supabaseService.createChatMessage(aiMessageObj);
+
+    return {
+      userMessage: {
+        message_text: savedUserMessage.message_text,
+        image_url: savedUserMessage.image_url || null,
+      },
+      aiMessage: {
+        message_text: savedAiMessage.message_text,
+        image_url: savedAiMessage.image_url || null,
+      },
+    };
+  }
+
+  /**
    * ให้คะแนนการตอบกลับของ AI
    */
   async rateAIResponse(
@@ -350,48 +456,60 @@ export class ChatService {
   /**
    * วิเคราะห์ข้อมูลสุขภาพเฉพาะเจาะจง
    */
-  async analyzeSpecificHealthData(userId: number, analysisType: string): Promise<any> {
+  async analyzeSpecificHealthData(
+    userId: number,
+    analysisType: string,
+  ): Promise<any> {
     try {
       // ตรวจสอบ analysisType
       if (!analysisType) {
-        this.logger.warn('Analysis type is undefined, defaulting to overall analysis');
+        this.logger.warn(
+          'Analysis type is undefined, defaulting to overall analysis',
+        );
         analysisType = 'overall';
       }
 
       const today = new Date().toISOString().split('T')[0];
-      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split('T')[0];
+      const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split('T')[0];
 
-      switch (analysisType.toLowerCase()) {
+      switch (analysisType?.toLowerCase() || 'overall') {
         case 'nutrition':
         case 'อาหาร':
           return await this.analyzeNutritionData(userId, weekAgo, today);
-        
+
         case 'exercise':
         case 'ออกกำลังกาย':
           return await this.analyzeExerciseData(userId, weekAgo, today);
-        
+
         case 'sleep':
         case 'การนอน':
           return await this.analyzeSleepData(userId, weekAgo, today);
-        
+
         case 'water':
         case 'น้ำ':
           return await this.analyzeWaterData(userId, weekAgo, today);
-        
+
         case 'goals':
         case 'เป้าหมาย':
           return await this.analyzeGoalsData(userId);
-        
+
         case 'overall':
         case 'รวม':
           return await this.analyzeOverallHealth(userId, weekAgo, today);
-        
+
         default:
           return await this.analyzeOverallHealth(userId, weekAgo, today);
       }
     } catch (error) {
-      this.logger.error(`Failed to analyze specific health data for user ${userId}`, error);
+      this.logger.error(
+        `Failed to analyze specific health data for user ${userId}`,
+        error,
+      );
       return { error: 'ไม่สามารถวิเคราะห์ข้อมูลได้' };
     }
   }
@@ -399,15 +517,25 @@ export class ChatService {
   /**
    * วิเคราะห์ข้อมูลโภชนาการ
    */
-  private async analyzeNutritionData(userId: number, dateFrom: string, dateTo: string): Promise<any> {
+  private async analyzeNutritionData(
+    userId: number,
+    dateFrom: string,
+    dateTo: string,
+  ): Promise<any> {
     const foodLogs = await this.supabaseService.getFoodLogs(userId, {
       date_from: dateFrom,
       date_to: dateTo,
     });
 
-    const totalCalories = foodLogs.reduce((sum, log) => sum + (log.calories || 0), 0);
+    const totalCalories = foodLogs.reduce(
+      (sum, log) => sum + (log.calories || 0),
+      0,
+    );
     const avgCaloriesPerDay = totalCalories / Math.max(foodLogs.length, 1);
-    const proteinIntake = foodLogs.reduce((sum, log) => sum + (log.protein || 0), 0);
+    const proteinIntake = foodLogs.reduce(
+      (sum, log) => sum + (log.protein || 0),
+      0,
+    );
     const carbIntake = foodLogs.reduce((sum, log) => sum + (log.carbs || 0), 0);
     const fatIntake = foodLogs.reduce((sum, log) => sum + (log.fat || 0), 0);
 
@@ -422,7 +550,7 @@ export class ChatService {
         carb_intake: Math.round(carbIntake),
         fat_intake: Math.round(fatIntake),
       },
-      recent_foods: foodLogs.slice(0, 10).map(log => ({
+      recent_foods: foodLogs.slice(0, 10).map((log) => ({
         food_name: log.food_name,
         calories: log.calories,
         protein: log.protein,
@@ -437,15 +565,24 @@ export class ChatService {
   /**
    * วิเคราะห์ข้อมูลการออกกำลังกาย
    */
-  private async analyzeExerciseData(userId: number, dateFrom: string, dateTo: string): Promise<any> {
+  private async analyzeExerciseData(
+    userId: number,
+    dateFrom: string,
+    dateTo: string,
+  ): Promise<any> {
     const exerciseLogs = await this.supabaseService.getExerciseLogs(userId, {
       exercise_date_from: dateFrom,
       exercise_date_to: dateTo,
     });
 
-    const totalDuration = exerciseLogs.reduce((sum, log) => sum + (log.duration_minutes || 0), 0);
+    const totalDuration = exerciseLogs.reduce(
+      (sum, log) => sum + (log.duration_minutes || 0),
+      0,
+    );
     const avgDurationPerDay = totalDuration / Math.max(exerciseLogs.length, 1);
-    const exerciseTypes = [...new Set(exerciseLogs.map(log => log.exercise_type))];
+    const exerciseTypes = [
+      ...new Set(exerciseLogs.map((log) => log.exercise_type)),
+    ];
 
     return {
       type: 'exercise',
@@ -456,7 +593,7 @@ export class ChatService {
         avg_duration_per_day: Math.round(avgDurationPerDay),
         exercise_types: exerciseTypes,
       },
-      recent_exercises: exerciseLogs.slice(0, 10).map(log => ({
+      recent_exercises: exerciseLogs.slice(0, 10).map((log) => ({
         exercise_type: log.exercise_type,
         duration_minutes: log.duration_minutes,
         calories_burned: log.calories_burned,
@@ -469,16 +606,26 @@ export class ChatService {
   /**
    * วิเคราะห์ข้อมูลการนอน
    */
-  private async analyzeSleepData(userId: number, dateFrom: string, dateTo: string): Promise<any> {
+  private async analyzeSleepData(
+    userId: number,
+    dateFrom: string,
+    dateTo: string,
+  ): Promise<any> {
     const sleepLogs = await this.supabaseService.getSleepLogsByUserId(userId);
-    const recentSleepLogs = sleepLogs.filter(log => 
-      new Date(log.sleep_date) >= new Date(dateFrom) && 
-      new Date(log.sleep_date) <= new Date(dateTo)
+    const recentSleepLogs = sleepLogs.filter(
+      (log) =>
+        new Date(log.sleep_date) >= new Date(dateFrom) &&
+        new Date(log.sleep_date) <= new Date(dateTo),
     );
 
-    const totalSleepHours = recentSleepLogs.reduce((sum, log) => sum + (log.total_sleep_hours || 0), 0);
+    const totalSleepHours = recentSleepLogs.reduce(
+      (sum, log) => sum + (log.total_sleep_hours || 0),
+      0,
+    );
     const avgSleepHours = totalSleepHours / Math.max(recentSleepLogs.length, 1);
-    const avgSleepQuality = recentSleepLogs.reduce((sum, log) => sum + (log.sleep_quality || 0), 0) / Math.max(recentSleepLogs.length, 1);
+    const avgSleepQuality =
+      recentSleepLogs.reduce((sum, log) => sum + (log.sleep_quality || 0), 0) /
+      Math.max(recentSleepLogs.length, 1);
 
     return {
       type: 'sleep',
@@ -489,7 +636,7 @@ export class ChatService {
         avg_sleep_hours: Math.round(avgSleepHours * 10) / 10,
         avg_sleep_quality: Math.round(avgSleepQuality * 10) / 10,
       },
-      recent_sleep: recentSleepLogs.slice(0, 7).map(log => ({
+      recent_sleep: recentSleepLogs.slice(0, 7).map((log) => ({
         sleep_date: log.sleep_date,
         total_sleep_hours: log.total_sleep_hours,
         sleep_quality: log.sleep_quality,
@@ -503,13 +650,20 @@ export class ChatService {
   /**
    * วิเคราะห์ข้อมูลการดื่มน้ำ
    */
-  private async analyzeWaterData(userId: number, dateFrom: string, dateTo: string): Promise<any> {
+  private async analyzeWaterData(
+    userId: number,
+    dateFrom: string,
+    dateTo: string,
+  ): Promise<any> {
     const waterLogs = await this.supabaseService.getWaterLogs(userId, {
       date_from: dateFrom,
       date_to: dateTo,
     });
 
-    const totalWater = waterLogs.reduce((sum, log) => sum + (log.amount_ml || 0), 0);
+    const totalWater = waterLogs.reduce(
+      (sum, log) => sum + (log.amount_ml || 0),
+      0,
+    );
     const avgWaterPerDay = totalWater / Math.max(waterLogs.length, 1);
 
     return {
@@ -520,7 +674,7 @@ export class ChatService {
         total_water_ml: totalWater,
         avg_water_per_day: Math.round(avgWaterPerDay),
       },
-      recent_water: waterLogs.slice(0, 7).map(log => ({
+      recent_water: waterLogs.slice(0, 7).map((log) => ({
         amount_ml: log.amount_ml,
         consumed_at: log.consumed_at,
       })),
@@ -532,13 +686,19 @@ export class ChatService {
    * วิเคราะห์ข้อมูลเป้าหมาย
    */
   private async analyzeGoalsData(userId: number): Promise<any> {
-    const healthGoals = await this.supabaseService.getHealthGoalsByUserId(userId);
-    
-    const activeGoals = healthGoals.filter(goal => goal.status === 'active');
-    const completedGoals = healthGoals.filter(goal => goal.status === 'completed');
-    const progressGoals = healthGoals.map(goal => ({
+    const healthGoals =
+      await this.supabaseService.getHealthGoalsByUserId(userId);
+
+    const activeGoals = healthGoals.filter((goal) => goal.status === 'active');
+    const completedGoals = healthGoals.filter(
+      (goal) => goal.status === 'completed',
+    );
+    const progressGoals = healthGoals.map((goal) => ({
       ...goal,
-      progress_percentage: goal.target_value > 0 ? Math.round((goal.current_value / goal.target_value) * 100) : 0,
+      progress_percentage:
+        goal.target_value > 0
+          ? Math.round((goal.current_value / goal.target_value) * 100)
+          : 0,
     }));
 
     return {
@@ -547,7 +707,15 @@ export class ChatService {
         total_goals: healthGoals.length,
         active_goals: activeGoals.length,
         completed_goals: completedGoals.length,
-        avg_progress: progressGoals.length > 0 ? Math.round(progressGoals.reduce((sum, goal) => sum + goal.progress_percentage, 0) / progressGoals.length) : 0,
+        avg_progress:
+          progressGoals.length > 0
+            ? Math.round(
+                progressGoals.reduce(
+                  (sum, goal) => sum + goal.progress_percentage,
+                  0,
+                ) / progressGoals.length,
+              )
+            : 0,
       },
       goals: progressGoals,
       recommendations: [], // ให้ AI วิเคราะห์และให้คำแนะนำเอง
@@ -557,14 +725,19 @@ export class ChatService {
   /**
    * วิเคราะห์สุขภาพโดยรวม
    */
-  private async analyzeOverallHealth(userId: number, dateFrom: string, dateTo: string): Promise<any> {
-    const [nutritionData, exerciseData, sleepData, waterData, goalsData] = await Promise.all([
-      this.analyzeNutritionData(userId, dateFrom, dateTo),
-      this.analyzeExerciseData(userId, dateFrom, dateTo),
-      this.analyzeSleepData(userId, dateFrom, dateTo),
-      this.analyzeWaterData(userId, dateFrom, dateTo),
-      this.analyzeGoalsData(userId),
-    ]);
+  private async analyzeOverallHealth(
+    userId: number,
+    dateFrom: string,
+    dateTo: string,
+  ): Promise<any> {
+    const [nutritionData, exerciseData, sleepData, waterData, goalsData] =
+      await Promise.all([
+        this.analyzeNutritionData(userId, dateFrom, dateTo),
+        this.analyzeExerciseData(userId, dateFrom, dateTo),
+        this.analyzeSleepData(userId, dateFrom, dateTo),
+        this.analyzeWaterData(userId, dateFrom, dateTo),
+        this.analyzeGoalsData(userId),
+      ]);
 
     return {
       type: 'overall',
@@ -574,26 +747,42 @@ export class ChatService {
       sleep: sleepData,
       water: waterData,
       goals: goalsData,
-      overall_score: this.calculateOverallScore(nutritionData, exerciseData, sleepData, waterData),
+      overall_score: this.calculateOverallScore(
+        nutritionData,
+        exerciseData,
+        sleepData,
+        waterData,
+      ),
     };
   }
 
   /**
    * คำนวณคะแนนสุขภาพโดยรวม
    */
-  private calculateOverallScore(nutrition: any, exercise: any, sleep: any, water: any): number {
-    const nutritionScore = Math.min(100, (nutrition.summary.avg_calories_per_day / 2000) * 100);
-    const exerciseScore = Math.min(100, (exercise.summary.avg_duration_per_day / 30) * 100);
+  private calculateOverallScore(
+    nutrition: any,
+    exercise: any,
+    sleep: any,
+    water: any,
+  ): number {
+    const nutritionScore = Math.min(
+      100,
+      (nutrition.summary.avg_calories_per_day / 2000) * 100,
+    );
+    const exerciseScore = Math.min(
+      100,
+      (exercise.summary.avg_duration_per_day / 30) * 100,
+    );
     const sleepScore = Math.min(100, (sleep.summary.avg_sleep_hours / 8) * 100);
-    const waterScore = Math.min(100, (water.summary.avg_water_per_day / 2000) * 100);
-    
-    return Math.round((nutritionScore + exerciseScore + sleepScore + waterScore) / 4);
+    const waterScore = Math.min(
+      100,
+      (water.summary.avg_water_per_day / 2000) * 100,
+    );
+
+    return Math.round(
+      (nutritionScore + exerciseScore + sleepScore + waterScore) / 4,
+    );
   }
-
-
-
-
-
 
   /**
    * ดึงข้อมูลกิจกรรมล่าสุดของผู้ใช้
@@ -601,9 +790,16 @@ export class ChatService {
   async getRecentUserActivities(userId: number): Promise<any> {
     try {
       const today = new Date().toISOString().split('T')[0];
-      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split('T')[0];
 
-      const [recentFoodLogs, recentExerciseLogs, recentSleepLogs, recentWaterLogs] = await Promise.all([
+      const [
+        recentFoodLogs,
+        recentExerciseLogs,
+        recentSleepLogs,
+        recentWaterLogs,
+      ] = await Promise.all([
         this.supabaseService.getFoodLogs(userId, {
           date_from: weekAgo,
           date_to: today,
@@ -633,7 +829,10 @@ export class ChatService {
         },
       };
     } catch (error) {
-      this.logger.error(`Failed to get recent activities for user ${userId}`, error);
+      this.logger.error(
+        `Failed to get recent activities for user ${userId}`,
+        error,
+      );
       return {
         food_logs: [],
         exercise_logs: [],
@@ -678,3 +877,4 @@ export class ChatService {
     }
   }
 }
+
