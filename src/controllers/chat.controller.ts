@@ -169,9 +169,15 @@ export class ChatController {
     }
 
     // ดึงข้อมูลการควบคุมการวิเคราะห์จาก body
-    const analyzeImage = body.analyze_image === 'true';
-    const analysisType = body.analysis_type || 'general';
+    let analyzeImage = body.analyze_image === 'true';
+    let analysisType = body.analysis_type || 'general';
     const instruction = body.instruction || '';
+
+    // ถ้าผู้ใช้ต้องการวิเคราะห์รูปภาพ ให้บังคับใช้ analysisType = 'general' และ analyzeImage = true
+    if (body.message && (body.message.includes('วิเคราะห์') || body.message.includes('วิเคราห์'))) {
+      analysisType = 'general';
+      analyzeImage = true;
+    }
 
     // Validate image (if present) - support multiple field names
     let imageUrl: string | null = null;
