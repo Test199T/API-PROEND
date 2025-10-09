@@ -10,11 +10,17 @@ import {
   HttpStatus,
   HttpCode,
   Query,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { AuthGuard } from '../auth/guards/auth.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { CurrentUser } from '../auth/decorators/user.decorator';
 // import { Public } from '../auth/decorators/public.decorator';
 import { AIService } from '../services/ai.service';
 import { Request } from 'express';
+import { FoodAnalysisDto } from '../dto/ai-food-analysis.dto';
 
 export interface AIAnalysisRequest {
   userId: number;
@@ -326,6 +332,57 @@ export class AIServiceController {
         timestamp: new Date().toISOString(),
       };
     }
-  }
+  }  /**
+   * วิเคราะห์รูปภาพอาหาร
+   * POST /api/ai-service/analyze-food-image
+   */
+  @Post('analyze-food-image')
+  @UseInterceptors(FileInterceptor('image'))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Food image to analyze',
+    type: 'object',
+    schema: {
+      type: 'object',
+      properties: {
+        image: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  async analyzeFoodImage(
+    @UploadedFile() image: any,
+    @CurrentUser('id') userId: number,
+  ) {
+    this.logger.log(`Food image analysis requested for user ${userId}`);
 
+    if (!image) {
+      return {
+        success: false,
+        error: 'No image file uploaded.',
+        timestamp: new Date().toISOString(),
+      };
+    }
+
+    try {
+      const analysisResult = await this.aiService.analyzeFoodImage(image.buffer);
+      return {
+        success: true,
+        data: analysisResult,
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      this.logger.error(
+        `Food image analysis failed for user ${userId}`,
+        error.stack,
+      );
+      return {
+        success: false,
+        message: `Error analyzing food image: ${error.message}`,
+        timestamp: new Date().toISOString(),
+      };
+    }
+  }
 }

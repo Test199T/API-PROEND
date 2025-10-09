@@ -955,6 +955,73 @@ export class AIService {
   }
 
   /**
+   * วิเคราะห์รูปภาพอาหารด้วย AI
+   * @param imageBuffer Buffer ของไฟล์รูปภาพ
+   * @returns ข้อมูลโภชนาการที่วิเคราะห์ได้
+   */
+  async analyzeFoodImage(imageBuffer: Buffer): Promise<any> {
+    const fs = require('fs');
+    const path = require('path');
+    const os = require('os');
+
+    // สร้างไฟล์ชั่วคราว
+    const tempDir = path.join(os.tmpdir(), 'health-api-uploads');
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+    }
+    const tempPath = path.join(tempDir, `${Date.now()}.jpg`);
+
+    try {
+      // เขียน buffer ลงในไฟล์ชั่วคราว
+      fs.writeFileSync(tempPath, imageBuffer);
+      this.logger.log(`Temporary image saved to: ${tempPath}`);
+
+      // เรียกใช้ OpenRouterService เพื่อวิเคราะห์รูปภาพ
+      const analysisResult = await this.openRouterService.analyzeFoodImageWithAI(
+        tempPath,
+      );
+
+      this.logger.log('Food image analysis successful');
+
+      // แปลงผลลัพธ์ให้อยู่ในรูปแบบที่ต้องการ (FoodAnalysisDto)
+      const mappedResult = {
+        food_name: analysisResult.food_name,
+        calories_per_serving: analysisResult.nutrition.calories,
+        protein_g: analysisResult.nutrition.protein_g,
+        carbs_g: analysisResult.nutrition.carbs_g,
+        fat_g: analysisResult.nutrition.fat_g,
+        fiber_g: analysisResult.nutrition.fiber_g,
+        sugar_g: analysisResult.nutrition.sugar_g,
+        sodium_mg: analysisResult.nutrition.sodium_mg,
+        potassium_mg: analysisResult.nutrition.potassium_mg,
+        calcium_mg: analysisResult.nutrition.calcium_mg,
+        iron_mg: analysisResult.nutrition.iron_mg,
+        vitaminC_mg: analysisResult.nutrition.vitaminC_mg,
+        vitaminD_mcg: analysisResult.nutrition.vitaminD_mcg,
+        notes: analysisResult.recommendations, // ใช้ recommendations เป็น notes
+      };
+
+      return mappedResult;
+    } catch (error) {
+      this.logger.error('Failed to analyze food image', error);
+      throw error;
+    } finally {
+      // ลบไฟล์ชั่วคราว
+      if (fs.existsSync(tempPath)) {
+        try {
+          fs.unlinkSync(tempPath);
+          this.logger.log(`Temporary image deleted: ${tempPath}`);
+        } catch (cleanupError) {
+          this.logger.error(
+            `Failed to delete temporary image: ${tempPath}`,
+            cleanupError,
+          );
+        }
+      }
+    }
+  }
+
+  /**
    * ดึงข้อมูลสุขภาพสำหรับการวิเคราะห์
    */
   private async getHealthDataForAnalysis(userId: number): Promise<any> {
