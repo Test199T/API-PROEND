@@ -1,7 +1,0 @@
-เช็ค GET ว่ามีฟอมของ User คนนี้กี่อัน http://localhost:3000/form/2d25f8b0-18fa-410e-8551-ce1c1af76f0e 
-เช็ค GET ฟอมที่ละอัน http://localhost:3000/form/2d25f8b0-18fa-410e-8551-ce1c1af76f0e/df50c09e-0c89-45f1-964c-27d7dc61a47e
-
-
-
-SUPABASE_URL=https://ucaukkreghmotmjgxjpq.supabase.co
-SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjYXVra3JlZ2htb3Rtamd4anBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyMDYyMDUsImV4cCI6MjA2ODc4MjIwNX0.VMEtZR1vHHzaeaWntVpKapf7gDyhRbr1GvBraK0dzHY

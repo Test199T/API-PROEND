@@ -98,13 +98,3 @@ SET
   notes = COALESCE(sleep_notes, ''),
   updated_at = CURRENT_TIMESTAMP
 WHERE sleep_duration_hours IS NULL;
-
--- 10. ลบ columns เก่าที่ไม่ใช้แล้ว (ระวัง! ตรวจสอบข้อมูลก่อนลบ)
--- ALTER TABLE public.sleep_log DROP COLUMN IF EXISTS total_sleep_hours;
--- ALTER TABLE public.sleep_log DROP COLUMN IF EXISTS deep_sleep_hours;
--- ALTER TABLE public.sleep_log DROP COLUMN IF EXISTS rem_sleep_hours;
--- ALTER TABLE public.sleep_log DROP COLUMN IF EXISTS light_sleep_hours;
--- ALTER TABLE public.sleep_log DROP COLUMN IF EXISTS sleep_notes;
--- ALTER TABLE public.sleep_log DROP COLUMN IF EXISTS factors_affecting_sleep;
-
--- ✅ เสร็จแล้ว! ตอนนี้ sleep_log table พร้อมใช้งานกับ API แล้ว
