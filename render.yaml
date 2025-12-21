@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: health-api
+    env: node
+    plan: free
+    buildCommand: "npm install && npm run build"
+    startCommand: "npm run start:prod"
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ALLOWED_ORIGINS
+        value: "http://localhost:3000,http://localhost:5173" # Add your frontend URL here
