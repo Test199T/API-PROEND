@@ -45,7 +45,7 @@ async function bootstrap() {
   // Response Compression
   const compressionLevel = configService.get('performance.compression.level', 6);
   const compressionThreshold = configService.get('performance.compression.threshold', 1024);
-  
+
   app.use(compression({
     level: compressionLevel,
     threshold: compressionThreshold,
@@ -58,10 +58,10 @@ async function bootstrap() {
   }));
 
   // Enable CORS
-  const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  const allowedOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',')
-    : ['http://localhost:3000', 'http://localhost:8080', 'http://localhost:5173', 'http://localhost:8081'];
-    
+    : ['http://localhost:3000', 'http://localhost:8080', 'http://localhost:5173', 'http://localhost:8081', 'https://vita-wise-ai.vercel.app'];
+
   app.enableCors({
     origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -114,7 +114,7 @@ async function bootstrap() {
   logger.log(`🔐 Auth endpoints available at: http://localhost:${port}/api/auth`);
   logger.log(`📊 Health check available at: http://localhost:${port}/api/health`);
   logger.log(`📈 Metrics available at: http://localhost:${port}/api/metrics`);
-  
+
   // Log startup completion
   loggingService.log('Application started successfully', 'Bootstrap', {
     port,
